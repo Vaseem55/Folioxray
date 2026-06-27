@@ -501,7 +501,7 @@
 
             // Section 4 — Alternatives
             document.getElementById('aiReplaceList').innerHTML = (advice.suggested_replacements || []).map(f =>
-                `<li class="flex items-start text-sm font-semibold text-slate-300"><span class="text-emerald-400 font-bold mr-2 text-base leading-none mt-0.5">âœ“</span><span>${f}</span></li>`
+                `<li class="flex items-start text-sm font-semibold text-slate-300"><span class="text-emerald-400 font-bold mr-2 text-base leading-none mt-0.5">✓</span><span>${f}</span></li>`
             ).join('');
         }
 
@@ -619,4 +619,4 @@
     </script>
 </body>
 </html>
-
+
