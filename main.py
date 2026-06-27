@@ -299,7 +299,7 @@ def is_international_fund(name: str) -> bool:
 
 @app.get("/")
 async def serve_frontend():
-    return FileResponse("index.html")
+    return FileResponse("index.html", media_type="text/html; charset=utf-8")
 
 
 @app.post("/audit-cas")
