@@ -73,51 +73,53 @@ FUND_HOLDINGS_CACHE = load_cache()
 # HOLDINGS FETCHERS
 # =====================================================================
 
-async def fetch_holdings_via_ai(fund_name: str) -> list:
-    prompt = f"""You are a financial data API for Indian mutual funds.
-Return the top 10 equity stock holdings with their approximate portfolio allocation percentages for this fund: "{fund_name}"
-
-Rules:
-- Use the fund's ACTUAL known holdings based on your training data.
-- Weights must be realistic (top holding rarely exceeds 10%, sum of top 10 is typically 35-55%).
-- If this is a debt/liquid/overnight fund with no equity holdings, return an empty array.
-- Use EXACTLY these JSON keys: "stock_name" (string, plain text only, NO emoji, NO symbols) and "weight_percent" (number).
-- Stock names must be plain English only, e.g. "Infosys Ltd" not "📊 Infosys Ltd".
-
-Wrap your array in: {{"holdings": [{{"stock_name": "Company Name Ltd", "weight_percent": 5.2}}, ...]}}"""
-
+async def fetch_holdings_from_amfi(fund_name: str, http_client: httpx.AsyncClient) -> list:
+    """Fetch real holdings from AMFI monthly portfolio disclosure."""
+    import re
     try:
-        response = await client.chat.completions.create(
-            model="gpt-4o-mini",
-            response_format={"type": "json_object"},
-            messages=[
-                {"role": "system", "content": "You are a precise financial data JSON API. Return only valid JSON."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.0,
-            seed=42
-        )
-        result = json.loads(response.choices[0].message.content)
-        holdings = result.get("holdings", [])
-        import re
+        # Step 1: find scheme code from mfapi
+        search_url = f"https://api.mfapi.in/mf/search?q={urllib.parse.quote(fund_name)}"
+        r = await http_client.get(search_url, timeout=10.0)
+        if r.status_code != 200 or not r.json():
+            return []
+        schemes = r.json()
+        if not schemes:
+            return []
+        scheme_code = schemes[0]["schemeCode"]
+        scheme_name = schemes[0]["schemeName"]
+        print(f"  AMFI match: {scheme_name} (code {scheme_code})")
+
+        # Step 2: fetch portfolio from mfapi portfolio endpoint
+        port_url = f"https://api.mfapi.in/mf/{scheme_code}/portfolio"
+        pr = await http_client.get(port_url, timeout=15.0)
+        if pr.status_code != 200:
+            return []
+        data = pr.json()
+        holdings_raw = data.get("portfolioDetails", data.get("portfolio", []))
+        if not holdings_raw:
+            return []
+
         cleaned = []
-        for h in holdings:
-            # Normalize key names
-            name = h.get("stock_name") or h.get("name") or h.get("stock") or h.get("company") or ""
-            weight = h.get("weight_percent") or h.get("weight") or h.get("percentage") or h.get("allocation") or 0
-            # Strip emoji and non-ASCII symbols from name
+        for h in holdings_raw:
+            name = (h.get("nameOfInstrument") or h.get("name") or h.get("companyName") or "").strip()
+            weight = h.get("percentageToNav") or h.get("weight") or h.get("percentage") or 0
             name = re.sub(r'[^\w\s\.\-\(\)&,/]', '', name, flags=re.ASCII).strip()
             try:
                 weight = float(weight)
             except:
                 weight = 0.0
+            # Only equity holdings (skip debt, cash, etc.)
+            asset_type = h.get("instrumentType", h.get("assetType", "")).lower()
+            if "debt" in asset_type or "bond" in asset_type or "tbill" in asset_type:
+                continue
             if name and weight > 0:
                 cleaned.append({"stock_name": name, "weight_percent": weight})
-        if cleaned:
-            print(f"  ✅ AI: got {len(cleaned)} holdings for '{fund_name}' | keys sample: {list(holdings[0].keys()) if holdings else []}")
-        return cleaned
+
+        cleaned.sort(key=lambda x: x["weight_percent"], reverse=True)
+        print(f"  ✅ AMFI: got {len(cleaned)} equity holdings for '{fund_name}'")
+        return cleaned[:15]
     except Exception as e:
-        print(f"  AI holdings fetch error: {e}")
+        print(f"  AMFI fetch error: {e}")
         return []
 
 
@@ -170,10 +172,14 @@ async def fetch_live_market_holdings(fund_name: str) -> list:
         "Accept": "application/json",
     }
     holdings = []
-    async with httpx.AsyncClient(headers=headers, timeout=15.0, follow_redirects=True) as http_client:
-        holdings = await fetch_from_vro(fund_name, http_client)
+    async with httpx.AsyncClient(headers=headers, timeout=20.0, follow_redirects=True) as http_client:
+        # Try AMFI real data first
+        holdings = await fetch_holdings_from_amfi(fund_name, http_client)
+        # Fallback to VRO scrape
+        if not holdings:
+            holdings = await fetch_from_vro(fund_name, http_client)
     if not holdings:
-        holdings = await fetch_holdings_via_ai(fund_name)
+        print(f"  ⚠️ No real data found for '{fund_name}' — skipping (not using AI estimates)")
 
     FUND_HOLDINGS_CACHE[fund_name] = holdings
     save_cache(FUND_HOLDINGS_CACHE)
