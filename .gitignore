@@ -1,0 +1,5 @@
+.env
+fund_cache.json
+__pycache__/
+*.pyc
+*.pdf

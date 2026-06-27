@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+casparser
+openai
+python-dotenv
+httpx
+beautifulsoup4
+lxml
+razorpay
