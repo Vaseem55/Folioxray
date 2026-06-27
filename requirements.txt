@@ -7,3 +7,4 @@ httpx
 beautifulsoup4
 lxml
 razorpay
+python-multipart
