@@ -230,8 +230,12 @@ async def build_full_report(domestic_portfolio: list) -> dict:
         fund_holdings_map[exact_name] = live_holdings
 
         for holding in live_holdings:
-            stock = holding["stock_name"]
-            weight = holding["weight_percent"]
+            stock = (holding.get("stock_name") or holding.get("name") or
+                     holding.get("stock") or holding.get("company") or "Unknown")
+            weight = float(holding.get("weight_percent") or holding.get("weight") or
+                           holding.get("percentage") or holding.get("allocation") or 0)
+            if not stock or stock == "Unknown" or weight <= 0:
+                continue
             if stock not in overlapping_stocks_master:
                 overlapping_stocks_master[stock] = {"stock_name": stock, "allocations": []}
             overlapping_stocks_master[stock]["allocations"].append({
@@ -252,8 +256,16 @@ async def build_full_report(domestic_portfolio: list) -> dict:
         for j in range(i + 1, len(fund_names_list)):
             name_a = fund_names_list[i]
             name_b = fund_names_list[j]
-            holdings_a = {h["stock_name"]: h["weight_percent"] for h in fund_holdings_map[name_a]}
-            holdings_b = {h["stock_name"]: h["weight_percent"] for h in fund_holdings_map[name_b]}
+            def normalize(holdings):
+                result = {}
+                for h in holdings:
+                    k = h.get("stock_name") or h.get("name") or h.get("stock") or h.get("company")
+                    v = float(h.get("weight_percent") or h.get("weight") or h.get("percentage") or 0)
+                    if k and v > 0:
+                        result[k] = v
+                return result
+            holdings_a = normalize(fund_holdings_map[name_a])
+            holdings_b = normalize(fund_holdings_map[name_b])
             common_stocks = []
             overlap_pct = 0.0
             for stock, wa in holdings_a.items():
