@@ -81,8 +81,10 @@ Rules:
 - Use the fund's ACTUAL known holdings based on your training data.
 - Weights must be realistic (top holding rarely exceeds 10%, sum of top 10 is typically 35-55%).
 - If this is a debt/liquid/overnight fund with no equity holdings, return an empty array.
+- Use EXACTLY these JSON keys: "stock_name" (string, plain text only, NO emoji, NO symbols) and "weight_percent" (number).
+- Stock names must be plain English only, e.g. "Infosys Ltd" not "📊 Infosys Ltd".
 
-Wrap your array in: {{"holdings": [...]}}"""
+Wrap your array in: {{"holdings": [{{"stock_name": "Company Name Ltd", "weight_percent": 5.2}}, ...]}}"""
 
     try:
         response = await client.chat.completions.create(
@@ -97,15 +99,23 @@ Wrap your array in: {{"holdings": [...]}}"""
         )
         result = json.loads(response.choices[0].message.content)
         holdings = result.get("holdings", [])
-        # Strip emoji and junk from stock names
         import re
+        cleaned = []
         for h in holdings:
-            for key in ("stock_name", "name", "stock", "company"):
-                if key in h and isinstance(h[key], str):
-                    h[key] = re.sub(r'[^\x00-\x7Fऀ-ॿ–—]+', '', h[key]).strip()
-        if holdings:
-            print(f"  ✅ AI: got {len(holdings)} holdings for '{fund_name}'")
-        return holdings
+            # Normalize key names
+            name = h.get("stock_name") or h.get("name") or h.get("stock") or h.get("company") or ""
+            weight = h.get("weight_percent") or h.get("weight") or h.get("percentage") or h.get("allocation") or 0
+            # Strip emoji and non-ASCII symbols from name
+            name = re.sub(r'[^\w\s\.\-\(\)&,/]', '', name, flags=re.ASCII).strip()
+            try:
+                weight = float(weight)
+            except:
+                weight = 0.0
+            if name and weight > 0:
+                cleaned.append({"stock_name": name, "weight_percent": weight})
+        if cleaned:
+            print(f"  ✅ AI: got {len(cleaned)} holdings for '{fund_name}' | keys sample: {list(holdings[0].keys()) if holdings else []}")
+        return cleaned
     except Exception as e:
         print(f"  AI holdings fetch error: {e}")
         return []
