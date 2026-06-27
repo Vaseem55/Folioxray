@@ -317,6 +317,83 @@ async def build_full_report(domestic_portfolio: list) -> dict:
 
 
 # =====================================================================
+# TEST SCENARIOS (bypass PDF upload for dev/validation)
+# =====================================================================
+
+TEST_SCENARIOS = {
+    "high_overlap": [
+        {"scheme_name": "Mirae Asset Large Cap Fund - Direct Plan - Growth", "current_value_inr": 150000},
+        {"scheme_name": "Axis Bluechip Fund - Direct Plan - Growth", "current_value_inr": 120000},
+        {"scheme_name": "HDFC Top 100 Fund - Direct Plan - Growth", "current_value_inr": 80000},
+    ],
+    "low_overlap": [
+        {"scheme_name": "Parag Parikh Flexi Cap Fund - Direct Plan - Growth", "current_value_inr": 200000},
+        {"scheme_name": "Kotak Small Cap Fund - Direct Plan - Growth", "current_value_inr": 100000},
+        {"scheme_name": "ICICI Prudential Technology Fund - Direct Plan - Growth", "current_value_inr": 75000},
+    ],
+    "with_international": [
+        {"scheme_name": "Mirae Asset Large Cap Fund - Direct Plan - Growth", "current_value_inr": 150000},
+        {"scheme_name": "Motilal Oswal Nasdaq 100 FOF - Direct Plan - Growth", "current_value_inr": 50000},
+        {"scheme_name": "SBI Magnum Midcap Fund - Direct Plan - Growth", "current_value_inr": 100000},
+        {"scheme_name": "Franklin India Feeder - Franklin U.S. Opportunities Fund", "current_value_inr": 40000},
+    ],
+    "small_cap_overlap": [
+        {"scheme_name": "Bandhan Small Cap Fund - Direct Plan - Growth", "current_value_inr": 90000},
+        {"scheme_name": "quant Small Cap Fund - Direct Plan - Growth", "current_value_inr": 85000},
+        {"scheme_name": "Nippon India Small Cap Fund - Direct Plan - Growth", "current_value_inr": 70000},
+    ],
+}
+
+
+@app.get("/test-scenario/{scenario}")
+async def test_scenario(scenario: str):
+    """Dev-only: simulate a portfolio without uploading a PDF."""
+    if scenario not in TEST_SCENARIOS:
+        return JSONResponse(status_code=404, content={
+            "available_scenarios": list(TEST_SCENARIOS.keys()),
+            "usage": "/test-scenario/high_overlap"
+        })
+    portfolio = TEST_SCENARIOS[scenario]
+    domestic = [f for f in portfolio if not is_international_fund(f["scheme_name"])]
+    total = sum(f["current_value_inr"] for f in portfolio)
+    session_id = str(uuid.uuid4())
+    pending_sessions[session_id] = {
+        "portfolio_summary": portfolio,
+        "domestic_portfolio": domestic,
+        "total_portfolio_value": total,
+    }
+    return JSONResponse(content={
+        "status": "success",
+        "scenario": scenario,
+        "session_id": session_id,
+        "total_portfolio_value": total,
+        "fund_count": len(portfolio),
+        "funds": portfolio,
+        "note": "Test mode — no PDF needed. Use this session_id to call /create-order or /test-full-report"
+    })
+
+
+@app.get("/test-full-report/{scenario}")
+async def test_full_report(scenario: str):
+    """Dev-only: run full overlap analysis on a scenario without payment."""
+    if scenario not in TEST_SCENARIOS:
+        return JSONResponse(status_code=404, content={"available": list(TEST_SCENARIOS.keys())})
+    portfolio = TEST_SCENARIOS[scenario]
+    domestic = [f for f in portfolio if not is_international_fund(f["scheme_name"])]
+    total = sum(f["current_value_inr"] for f in portfolio)
+    ai_advice = await build_full_report(domestic)
+    return JSONResponse(content={
+        "status": "success",
+        "scenario": scenario,
+        "total_portfolio_value": total,
+        "funds": portfolio,
+        "domestic_fund_count": len(domestic),
+        "international_excluded": len(portfolio) - len(domestic),
+        "ai_advice": ai_advice,
+    })
+
+
+# =====================================================================
 # HELPERS
 # =====================================================================
 
