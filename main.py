@@ -97,6 +97,12 @@ Wrap your array in: {{"holdings": [...]}}"""
         )
         result = json.loads(response.choices[0].message.content)
         holdings = result.get("holdings", [])
+        # Strip emoji and junk from stock names
+        import re
+        for h in holdings:
+            for key in ("stock_name", "name", "stock", "company"):
+                if key in h and isinstance(h[key], str):
+                    h[key] = re.sub(r'[^\x00-\x7Fऀ-ॿ–—]+', '', h[key]).strip()
         if holdings:
             print(f"  ✅ AI: got {len(holdings)} holdings for '{fund_name}'")
         return holdings
@@ -216,13 +222,18 @@ async def build_full_report(domestic_portfolio: list) -> dict:
     mapped_overlapping_funds = []
     fund_holdings_map = {}
 
+    already_matched = set()
     for target_fund in ai_advice.get("overlapping_funds", []):
         matched_value = 0.0
         exact_name = target_fund
         for real_fund in domestic_portfolio:
-            if target_fund.lower() in real_fund["scheme_name"].lower() or real_fund["scheme_name"].lower() in target_fund.lower():
+            rname = real_fund["scheme_name"]
+            if rname in already_matched:
+                continue
+            if target_fund.lower() in rname.lower() or rname.lower() in target_fund.lower():
                 matched_value = real_fund["current_value_inr"]
-                exact_name = real_fund["scheme_name"]
+                exact_name = rname
+                already_matched.add(rname)
                 break
 
         mapped_overlapping_funds.append({"scheme_name": exact_name, "current_value_inr": matched_value})
