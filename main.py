@@ -489,23 +489,30 @@ def is_non_equity_fund(name: str) -> bool:
 
 @app.get("/debug-amfi")
 async def debug_amfi():
-    """Test direct AMC portfolio download pages for live holdings data."""
+    """Test Indian fintech app APIs for MF holdings data."""
     ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     tests = {
-        "axis_portfolio": "https://www.axismf.com/api/fund-details/portfolio-download",
-        "axis_page": "https://www.axismf.com/downloads/monthly-portfolio",
-        "hdfc_portfolio": "https://www.hdfcfund.com/investor-services/performance-and-portfolio/portfolio-disclosures",
-        "mirae_portfolio": "https://www.miraeassetmf.co.in/downloads/monthly-portfolio",
-        "sbi_portfolio": "https://www.sbimf.com/en-us/downloads",
-        "icici_portfolio": "https://www.icicipruamc.com/downloads/portfolios",
-        "nav_txt": "https://www.amfiindia.com/spages/NAVAll.txt",
+        # Groww - try different search formats
+        "groww_search1": "https://groww.in/v1/api/search/v3/query/global/scheme?q=axis+bluechip&page=0&size=3",
+        "groww_search2": "https://groww.in/v1/api/data/fund/search/v1/entity?q=axis+bluechip&entity_type=SCHEME",
+        # Kuvera
+        "kuvera_schemes": "https://api.kuvera.in/api/v4/fund_schemes.json?per_page=3",
+        "kuvera_search": "https://api.kuvera.in/api/v3/fund_schemes.json?q=axis+bluechip",
+        # Tickertape MF specific
+        "tickertape_mf": "https://api.tickertape.in/mfsearch?q=axis+bluechip+direct",
+        "tickertape_mf2": "https://api.tickertape.in/mf/search?q=axis+bluechip",
+        # AMFI NAV file (always worked)
+        "amfi_nav": "https://www.amfiindia.com/spages/NAVAll.txt",
     }
     results = {}
+    headers = {"User-Agent": ua, "Accept": "application/json", "Referer": "https://groww.in/"}
     async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as http_client:
         for name, url in tests.items():
             try:
-                r = await http_client.get(url, headers={"User-Agent": ua})
-                results[name] = {"status": r.status_code, "size": len(r.text), "first_200": r.text[:200]}
+                r = await http_client.get(url, headers=headers)
+                ct = r.headers.get("content-type", "")
+                body = r.json() if "json" in ct else r.text[:300]
+                results[name] = {"status": r.status_code, "size": len(r.text), "body": body if r.status_code == 200 else r.text[:200]}
             except Exception as e:
                 results[name] = {"error": str(e)}
     return JSONResponse(content=results)
