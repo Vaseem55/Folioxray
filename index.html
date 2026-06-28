@@ -143,84 +143,52 @@
         </div>
     </div>
 
-    <div class="max-w-5xl mx-auto px-6 py-12 relative">
+    <div class="max-w-5xl mx-auto px-6 py-4 relative">
 
-        <!-- HEADER -->
-        <header class="relative text-center mb-10 overflow-hidden py-6">
-            <div class="hero-chart-wrap">
-                <svg viewBox="0 0 800 200" preserveAspectRatio="none" class="w-full h-full">
-                    <defs>
-                        <linearGradient id="lineGradCyan" x1="0" y1="0" x2="1" y2="0">
-                            <stop offset="0%" stop-color="#22d3ee"/>
-                            <stop offset="100%" stop-color="#a78bfa"/>
-                        </linearGradient>
-                        <linearGradient id="lineGradFade" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.25"/>
-                            <stop offset="100%" stop-color="#22d3ee" stop-opacity="0"/>
-                        </linearGradient>
-                    </defs>
-                    <path d="M0,150 L80,160 L160,135 L240,150 L320,100 L400,120 L480,75 L560,95 L640,55 L720,70 L800,40 L800,200 L0,200 Z" fill="url(#lineGradFade)" stroke="none" />
-                    <path d="M0,175 L100,165 L200,180 L300,150 L400,165 L500,140 L600,150 L700,120 L800,130" fill="none" stroke="#a78bfa" stroke-width="1.5" stroke-opacity="0.35" stroke-linecap="round" />
-                    <path class="chart-dash" d="M0,150 L80,160 L160,135 L240,150 L320,100 L400,120 L480,75 L560,95 L640,55 L720,70 L800,40" fill="none" stroke="url(#lineGradCyan)" stroke-width="2" stroke-linecap="round" />
-                    <circle r="5" fill="#22d3ee">
-                        <animateMotion dur="7s" repeatCount="indefinite" path="M0,150 L80,160 L160,135 L240,150 L320,100 L400,120 L480,75 L560,95 L640,55 L720,70 L800,40" />
-                    </circle>
-                </svg>
-            </div>
+        <!-- HEADER + UPLOAD — single above-the-fold section -->
+        <div class="flex flex-col lg:flex-row items-start gap-6 mb-8">
 
-            <span class="float-glyph" style="left:6%; font-size:1.05rem; animation-duration:13s; animation-delay:0s;">₹</span>
-            <span class="float-glyph" style="left:18%; font-size:0.85rem; animation-duration:16s; animation-delay:3s;">%</span>
-            <span class="float-glyph text-emerald-400" style="left:30%; font-size:0.9rem; animation-duration:11s; animation-delay:1.5s;">▲</span>
-            <span class="float-glyph text-rose-400" style="left:68%; font-size:0.85rem; animation-duration:14s; animation-delay:5s;">▼</span>
-            <span class="float-glyph" style="left:80%; font-size:0.8rem; animation-duration:15s; animation-delay:2s;">NAV</span>
-            <span class="float-glyph" style="left:92%; font-size:0.95rem; animation-duration:12s; animation-delay:4s;">∑</span>
-
-            <div class="relative z-10">
-                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass mb-6 text-xs font-mono text-cyan-300 tracking-wider uppercase">
+            <!-- LEFT: branding + steps -->
+            <div class="flex-1 pt-2">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full glass mb-4 text-xs font-mono text-cyan-300 tracking-wider uppercase">
                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-dot"></span>
                     CAS Intelligence Engine — Online
                 </div>
-                <h1 class="font-display text-5xl sm:text-6xl font-bold tracking-tight text-white">
+                <h1 class="font-display text-4xl sm:text-5xl font-bold tracking-tight text-white leading-tight">
                     Folio<span class="text-gradient">XRay</span>
                 </h1>
-                <p class="text-slate-400 mt-4 text-lg max-w-2xl mx-auto leading-relaxed">
-                    Upload your Consolidated Account Statement. We decode every fund, surface common stock overlaps, and rank fund pairs by overlap — instantly.
+                <p class="text-slate-400 mt-3 text-sm max-w-md leading-relaxed">
+                    Upload your CAS PDF. We decode every fund, surface common stock overlaps, and rank fund pairs by overlap — instantly.
                 </p>
-                <div class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 mt-6 text-xs text-slate-500 font-mono uppercase tracking-wider">
-                    <span>CAMS</span>
-                    <span class="w-1 h-1 rounded-full bg-slate-600"></span>
-                    <span>KFintech</span>
-                    <span class="w-1 h-1 rounded-full bg-slate-600"></span>
+                <div class="mt-5 space-y-2.5">
+                    <div class="flex items-center gap-3">
+                        <div class="w-7 h-7 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-300 font-mono font-bold text-[11px] shrink-0">01</div>
+                        <span class="text-xs text-slate-400"><span class="text-slate-200 font-semibold">Upload CAS</span> — CAMS or KFintech Detailed PDF</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-7 h-7 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center text-violet-300 font-mono font-bold text-[11px] shrink-0">02</div>
+                        <span class="text-xs text-slate-400"><span class="text-slate-200 font-semibold">AI Decodes Holdings</span> — every scheme mapped to its stocks</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-300 font-mono font-bold text-[11px] shrink-0">03</div>
+                        <span class="text-xs text-slate-400"><span class="text-slate-200 font-semibold">Ranked Overlap Report</span> — fund pairs ranked stock-by-stock</span>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-x-4 gap-y-1 mt-5 text-[11px] text-slate-500 font-mono uppercase tracking-wider">
+                    <span>CAMS · KFintech</span>
+                    <span>·</span>
                     <span>256-bit Encrypted</span>
-                    <span class="w-1 h-1 rounded-full bg-slate-600"></span>
+                    <span>·</span>
                     <span>Not Stored</span>
-                    <span class="w-1 h-1 rounded-full bg-slate-600"></span>
+                    <span>·</span>
                     <span>Intl Funds Excluded</span>
                 </div>
             </div>
-        </header>
 
-        <!-- HOW IT WORKS -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
-            <div class="glass rounded-2xl p-5 text-center hover-lift">
-                <div class="w-10 h-10 mx-auto mb-3 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-300 font-mono font-bold">01</div>
-                <p class="font-display font-semibold text-white text-sm mb-1">Upload CAS</p>
-                <p class="text-xs text-slate-500">Drop your CAMS / KFintech statement PDF</p>
-            </div>
-            <div class="glass rounded-2xl p-5 text-center hover-lift">
-                <div class="w-10 h-10 mx-auto mb-3 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center text-violet-300 font-mono font-bold">02</div>
-                <p class="font-display font-semibold text-white text-sm mb-1">AI Decodes Holdings</p>
-                <p class="text-xs text-slate-500">Every scheme mapped to its underlying stocks</p>
-            </div>
-            <div class="glass rounded-2xl p-5 text-center hover-lift">
-                <div class="w-10 h-10 mx-auto mb-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-300 font-mono font-bold">03</div>
-                <p class="font-display font-semibold text-white text-sm mb-1">Ranked Overlap Report</p>
-                <p class="text-xs text-slate-500">Fund pairs ranked by common weightage, stock-by-stock</p>
-            </div>
-        </div>
-
+            <!-- RIGHT: upload form -->
+            <div class="w-full lg:w-[420px] shrink-0">
         <!-- UPLOAD FORM -->
-        <div class="glass rounded-3xl p-8 sm:p-10 mb-8 relative glow-cyan glow-breathe overflow-hidden" id="uploadContainer">
+        <div class="glass rounded-3xl p-6 sm:p-8 mb-0 relative glow-cyan glow-breathe overflow-hidden" id="uploadContainer">
             <div class="scan-line"></div>
             <form id="uploadForm" class="space-y-6 relative z-10">
                 <div>
@@ -248,6 +216,8 @@
                 </div>
             </form>
         </div>
+            </div><!-- /upload form wrapper -->
+        </div><!-- /hero flex row -->
 
         <!-- RESULTS DASHBOARD -->
         <div id="resultsCard" class="hidden space-y-6">
@@ -381,7 +351,20 @@
 
         </div>
 
-        <footer class="text-center text-xs text-slate-600 mt-12 font-mono">
+        <!-- CONTACT US -->
+        <div class="glass rounded-2xl p-6 mt-10 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+                <p class="font-display font-semibold text-white text-sm mb-1">Contact Us</p>
+                <p class="text-xs text-slate-500">Questions, feedback, or fund data requests? Reach out anytime.</p>
+            </div>
+            <a href="mailto:vaseemakrams55@gmail.com"
+               class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/25 text-cyan-300 text-sm font-mono font-semibold hover:bg-cyan-500/20 transition whitespace-nowrap">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                vaseemakrams55@gmail.com
+            </a>
+        </div>
+
+        <footer class="text-center text-xs text-slate-600 mt-6 mb-4 font-mono">
             Data processed transiently · Not stored · International equity funds excluded · Not investment advice
         </footer>
     </div>
