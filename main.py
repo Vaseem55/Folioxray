@@ -101,68 +101,59 @@ async def get_amfi_portfolio_file(http_client: httpx.AsyncClient) -> str:
 
 
 async def fetch_holdings_from_amfi(fund_name: str, http_client: httpx.AsyncClient) -> list:
-    """Fetch real holdings from AMFI monthly portfolio disclosure text file."""
+    """Fetch real holdings from Tickertape MF portfolio page."""
     import re
-
-    from difflib import SequenceMatcher
     try:
-        raw = await get_amfi_portfolio_file(http_client)
-        if not raw:
+        # Step 1: search for fund slug on Tickertape
+        query = urllib.parse.quote(fund_name)
+        search_url = f"https://api.tickertape.in/mf/search?query={query}&count=5"
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            "Accept": "application/json",
+            "Referer": "https://www.tickertape.in/",
+        }
+        r = await http_client.get(search_url, headers=headers, timeout=10.0)
+        if r.status_code != 200:
+            print(f"  Tickertape search failed: {r.status_code}")
+            return []
+        data = r.json()
+        funds = data.get("data", data.get("results", []))
+        if not funds:
+            print(f"  Tickertape: no results for '{fund_name}'")
             return []
 
-        # Parse the AMFI portfolio text file
-        # Format: scheme header line, then holding lines with semicolons
-        lines = raw.splitlines()
-        name_lower = fund_name.lower().replace("-", " ").strip()
-
-        # Find best matching scheme section
-        best_score = 0.0
-        best_start = -1
-        for i, line in enumerate(lines):
-            line_clean = line.strip()
-            if not line_clean or ";" not in line_clean:
-                # Could be a scheme name header line
-                score = SequenceMatcher(None, name_lower, line_clean.lower()).ratio()
-                if score > best_score:
-                    best_score = score
-                    best_start = i
-
-        print(f"  AMFI best match score {best_score:.2f} at line {best_start}: '{lines[best_start] if best_start >= 0 else ''}'")
-        if best_score < 0.4 or best_start < 0:
+        slug = funds[0].get("slug") or funds[0].get("sid") or funds[0].get("id")
+        matched_name = funds[0].get("name", "")
+        print(f"  Tickertape match: '{matched_name}' slug={slug}")
+        if not slug:
             return []
 
-        # Extract holdings from the section after the matched scheme name
+        # Step 2: fetch holdings
+        holdings_url = f"https://api.tickertape.in/mf/{slug}/holdings"
+        hr = await http_client.get(holdings_url, headers=headers, timeout=10.0)
+        if hr.status_code != 200:
+            print(f"  Tickertape holdings failed: {hr.status_code}")
+            return []
+
+        hdata = hr.json()
+        raw_holdings = hdata.get("data", hdata.get("holdings", []))
         cleaned = []
-        in_section = False
-        for line in lines[best_start:]:
-            parts = [p.strip() for p in line.split(";")]
-            if len(parts) >= 5:
-                in_section = True
-                name_col = parts[0]
-                # Last column is % to NAV
-                pct_col = parts[-1]
-                # Skip header rows and debt instruments (those have ratings in col 3 or 4)
-                rating_col = parts[3] if len(parts) > 3 else ""
-                if name_col.lower() in ("name of instrument", "name of the instrument", ""):
-                    continue
-                if rating_col and rating_col not in ("-", "NA", "N/A", "") and not rating_col.replace(".", "").replace(",", "").replace("-", "").isdigit():
-                    continue  # Has a credit rating — it's a debt instrument
-                try:
-                    weight = float(pct_col.replace(",", ""))
-                    if name_col and weight > 0:
-                        cleaned.append({"stock_name": name_col, "weight_percent": weight})
-                except:
-                    pass
-            elif in_section and len(parts) < 3 and line.strip():
-                # Reached next scheme section
-                break
+        for h in raw_holdings:
+            name = (h.get("name") or h.get("stockName") or h.get("sname") or "").strip()
+            weight = h.get("weight") or h.get("percentage") or h.get("holdingPct") or 0
+            name = re.sub(r'[^\w\s\.\-\(\)&,/]', '', name, flags=re.ASCII).strip()
+            try:
+                weight = float(weight)
+            except:
+                weight = 0.0
+            if name and weight > 0:
+                cleaned.append({"stock_name": name, "weight_percent": weight})
 
         cleaned.sort(key=lambda x: x["weight_percent"], reverse=True)
-        print(f"  ✅ AMFI file: {len(cleaned)} equity holdings for '{fund_name}'")
+        print(f"  ✅ Tickertape: {len(cleaned)} holdings for '{fund_name}'")
         return cleaned[:15]
     except Exception as e:
-        import traceback
-        print(f"  AMFI parse error: {traceback.format_exc()}")
+        print(f"  Tickertape error: {e}")
         return []
 
 
@@ -459,32 +450,20 @@ def is_international_fund(name: str) -> bool:
 
 @app.get("/debug-amfi")
 async def debug_amfi():
-    """Test various AMFI portfolio URLs to find the working one."""
-    from datetime import datetime, timedelta
-    async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as http_client:
-        now = datetime.now()
-        results = {}
-        urls_to_try = []
-        # Different URL formats AMFI has used over the years
-        for delta in [0, 1, 2]:
-            d = now.replace(day=1) - timedelta(days=delta * 30)
-            mmyy = d.strftime("%m%y")
-            mmmyyyy = d.strftime("%b%Y")  # e.g. Jun2026
-            yyyy_mm = d.strftime("%Y%m")
-            urls_to_try += [
-                f"https://www.amfiindia.com/spages/aportfolio{mmyy}.txt",
-                f"https://www.amfiindia.com/spages/aportfolio{mmmyyyy}.txt",
-                f"https://www.amfiindia.com/modules/DownloadMonthlyPortfolio?mPortfolioType=BS&distributor=AMFI&mPortfolioDate={d.strftime('%d-%b-%Y')}",
-            ]
-        # Also try the main portfolio page to find the actual link
-        urls_to_try.append("https://www.amfiindia.com/research-information/other-data/scheme-portfolio")
-        for url in urls_to_try[:6]:
-            try:
-                r = await http_client.get(url, timeout=15.0)
-                results[url] = {"status": r.status_code, "size": len(r.text), "first_200": r.text[:200]}
-            except Exception as e:
-                results[url] = {"error": str(e)}
-    return JSONResponse(content=results)
+    """Test Tickertape MF holdings API."""
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "Accept": "application/json",
+        "Referer": "https://www.tickertape.in/",
+    }
+    async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as http_client:
+        search_url = "https://api.tickertape.in/mf/search?query=Axis+Blue+Chip+Direct+Growth&count=3"
+        try:
+            r = await http_client.get(search_url, headers=headers)
+            search_result = {"status": r.status_code, "body": r.json() if r.status_code == 200 else r.text[:300]}
+        except Exception as e:
+            search_result = {"error": str(e)}
+    return JSONResponse(content={"tickertape_search": search_result})
 
 
 @app.get("/")
