@@ -1267,7 +1267,7 @@ def lookup_fund_holdings(fund_name: str):
             best_key = key
 
     print(f"  Fund lookup '{name}' -> best='{best_key}' score={best_score:.2f}")
-    if best_score >= 0.62:
+    if best_score >= 0.72:
         return FUND_HOLDINGS[best_key], best_key
 
     return None, None
