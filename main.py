@@ -451,30 +451,31 @@ def is_international_fund(name: str) -> bool:
 
 @app.get("/debug-amfi")
 async def debug_amfi():
-    """Test AMFI RSC URL and related portfolio endpoints."""
+    """Test AMFI schemewisedisclosure API."""
     ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    headers = {
-        "User-Agent": ua,
-        "Accept": "text/html,application/json,*/*",
-        "Referer": "https://www.amfiindia.com/",
-        "Next-Router-State-Tree": "%5B%22%22%2C%7B%7D%5D",
-        "RSC": "1",
-    }
-    tests = {
-        "rsc_research": "https://www.amfiindia.com/research-information?_rsc=k3sv0",
-        "rsc_portfolio": "https://www.amfiindia.com/research-information/other-data/scheme-portfolio?_rsc=k3sv0",
-        "amfi_api_portfolio": "https://www.amfiindia.com/api/scheme-portfolio",
-        "amfi_api_funds": "https://www.amfiindia.com/api/funds",
-        "amfi_download": "https://www.amfiindia.com/research-information/other-data/scheme-portfolio-monthly-data",
-    }
+    headers = {"User-Agent": ua, "Accept": "application/json, */*", "Referer": "https://www.amfiindia.com/"}
     results = {}
-    async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as http_client:
+    async with httpx.AsyncClient(timeout=20.0, follow_redirects=True) as http_client:
+        # Test the discovered endpoint with a few different MF_IDs and months
+        tests = {
+            "mf3_jan26": "https://www.amfiindia.com/api/schemewisedisclosure-investment?MF_ID=3&strMonth=01-Jan-2026",
+            "mf3_may26": "https://www.amfiindia.com/api/schemewisedisclosure-investment?MF_ID=3&strMonth=01-May-2026",
+            "mf1_jan26": "https://www.amfiindia.com/api/schemewisedisclosure-investment?MF_ID=1&strMonth=01-Jan-2026",
+            "mf10_jan26": "https://www.amfiindia.com/api/schemewisedisclosure-investment?MF_ID=10&strMonth=01-Jan-2026",
+            "mf_list": "https://www.amfiindia.com/api/schemewisedisclosure-investment",
+        }
         for name, url in tests.items():
             try:
                 r = await http_client.get(url, headers=headers)
                 ct = r.headers.get("content-type", "")
-                body = r.json() if "json" in ct else r.text[:500]
-                results[name] = {"status": r.status_code, "content_type": ct, "size": len(r.text), "body": body}
+                try:
+                    body = r.json()
+                    if isinstance(body, list):
+                        results[name] = {"status": r.status_code, "type": "array", "count": len(body), "first_item": body[0] if body else None}
+                    else:
+                        results[name] = {"status": r.status_code, "type": "object", "keys": list(body.keys()) if isinstance(body, dict) else str(body)[:200]}
+                except:
+                    results[name] = {"status": r.status_code, "content_type": ct, "size": len(r.text), "first_300": r.text[:300]}
             except Exception as e:
                 results[name] = {"error": str(e)}
     return JSONResponse(content=results)
