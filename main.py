@@ -74,53 +74,63 @@ FUND_HOLDINGS_CACHE = load_cache()
 # =====================================================================
 
 async def fetch_holdings_from_amfi(fund_name: str, http_client: httpx.AsyncClient) -> list:
-    """Fetch real holdings from AMFI monthly portfolio disclosure."""
+    """Fetch real holdings using mftool (pulls from AMFI monthly disclosures)."""
     import re
-    try:
-        # Step 1: find scheme code from mfapi
-        search_url = f"https://api.mfapi.in/mf/search?q={urllib.parse.quote(fund_name)}"
-        r = await http_client.get(search_url, timeout=10.0)
-        if r.status_code != 200 or not r.json():
-            return []
-        schemes = r.json()
-        if not schemes:
-            return []
-        scheme_code = schemes[0]["schemeCode"]
-        scheme_name = schemes[0]["schemeName"]
-        print(f"  AMFI match: {scheme_name} (code {scheme_code})")
+    from concurrent.futures import ThreadPoolExecutor
+    import asyncio
 
-        # Step 2: fetch portfolio from mfapi portfolio endpoint
-        port_url = f"https://api.mfapi.in/mf/{scheme_code}/portfolio"
-        pr = await http_client.get(port_url, timeout=15.0)
-        if pr.status_code != 200:
-            return []
-        data = pr.json()
-        holdings_raw = data.get("portfolioDetails", data.get("portfolio", []))
-        if not holdings_raw:
+    def _sync_fetch(name):
+        try:
+            from mftool import Mftool
+            mf = Mftool()
+            # Search for scheme code
+            all_schemes = mf.get_scheme_codes()
+            if not all_schemes:
+                return []
+            # Find best matching scheme code
+            name_lower = name.lower()
+            best_code = None
+            best_score = 0
+            for code, scheme_name in all_schemes.items():
+                sname = scheme_name.lower()
+                # Score by word overlap
+                words = [w for w in name_lower.split() if len(w) > 3]
+                score = sum(1 for w in words if w in sname)
+                if score > best_score:
+                    best_score = score
+                    best_code = code
+            if not best_code or best_score < 2:
+                print(f"  mftool: no good match for '{name}' (best score {best_score})")
+                return []
+            portfolio = mf.get_scheme_portfolio(best_code)
+            if not portfolio or "portfolios" not in portfolio:
+                return []
+            holdings = portfolio["portfolios"]
+            cleaned = []
+            for h in holdings:
+                stock = (h.get("nameOfInstrument") or h.get("sectorName") or "").strip()
+                weight = h.get("percentageToNav") or h.get("percentage") or 0
+                stock = re.sub(r'[^\w\s\.\-\(\)&,/]', '', stock, flags=re.ASCII).strip()
+                try:
+                    weight = float(weight)
+                except:
+                    weight = 0.0
+                # Skip non-equity rows
+                if h.get("rating") or "bond" in stock.lower() or "tbill" in stock.lower():
+                    continue
+                if stock and weight > 0:
+                    cleaned.append({"stock_name": stock, "weight_percent": weight})
+            cleaned.sort(key=lambda x: x["weight_percent"], reverse=True)
+            print(f"  ✅ mftool: {len(cleaned)} holdings for '{name}'")
+            return cleaned[:15]
+        except Exception as e:
+            print(f"  mftool error: {e}")
             return []
 
-        cleaned = []
-        for h in holdings_raw:
-            name = (h.get("nameOfInstrument") or h.get("name") or h.get("companyName") or "").strip()
-            weight = h.get("percentageToNav") or h.get("weight") or h.get("percentage") or 0
-            name = re.sub(r'[^\w\s\.\-\(\)&,/]', '', name, flags=re.ASCII).strip()
-            try:
-                weight = float(weight)
-            except:
-                weight = 0.0
-            # Only equity holdings (skip debt, cash, etc.)
-            asset_type = h.get("instrumentType", h.get("assetType", "")).lower()
-            if "debt" in asset_type or "bond" in asset_type or "tbill" in asset_type:
-                continue
-            if name and weight > 0:
-                cleaned.append({"stock_name": name, "weight_percent": weight})
-
-        cleaned.sort(key=lambda x: x["weight_percent"], reverse=True)
-        print(f"  ✅ AMFI: got {len(cleaned)} equity holdings for '{fund_name}'")
-        return cleaned[:15]
-    except Exception as e:
-        print(f"  AMFI fetch error: {e}")
-        return []
+    loop = asyncio.get_event_loop()
+    with ThreadPoolExecutor() as pool:
+        result = await loop.run_in_executor(pool, _sync_fetch, fund_name)
+    return result
 
 
 async def fetch_from_vro(fund_name: str, http_client: httpx.AsyncClient) -> list:
