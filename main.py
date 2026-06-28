@@ -320,7 +320,8 @@ async def build_full_report(domestic_portfolio: list) -> dict:
         if len(data["allocations"]) > 1
     ]
 
-    fund_names_list = list(fund_holdings_map.keys())
+    # Only compare funds that have actual equity holdings
+    fund_names_list = [name for name, h in fund_holdings_map.items() if len(h) > 0]
     pair_overlaps = []
     for i in range(len(fund_names_list)):
         for j in range(i + 1, len(fund_names_list)):
