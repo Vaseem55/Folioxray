@@ -512,6 +512,66 @@
         /* ── ANIMATE spin ───────────────────────────────── */
         @keyframes spin { to { transform: rotate(360deg); } }
         .animate-spin { animation: spin 1s linear infinite; }
+
+        /* ── PERSON ILLUSTRATION CONTAINER ─────────────── */
+        .person-scene {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .person-svg {
+            width: 280px;
+            max-height: 420px;
+            animation: personBreathe 4s ease-in-out infinite;
+            filter: drop-shadow(0 0 28px rgba(34,211,238,0.22));
+            position: relative;
+            z-index: 2;
+        }
+        @keyframes personBreathe {
+            0%, 100% { transform: translateY(0px); }
+            50%       { transform: translateY(-8px); }
+        }
+
+        /* ── EMOJI BUBBLES ──────────────────────────────── */
+        .emoji-bubble {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 1.6rem;
+            width: 62px;
+            height: 62px;
+            background: rgba(8, 14, 32, 0.88);
+            border: 1.5px solid rgba(34,211,238,0.45);
+            box-shadow: 0 0 18px rgba(34,211,238,0.15), inset 0 0 10px rgba(34,211,238,0.05);
+            animation: emojiFloat var(--dur, 3s) ease-in-out infinite var(--delay, 0s);
+            z-index: 3;
+            user-select: none;
+        }
+        .emoji-bubble.gold   { border-color: rgba(251,191,36,0.5);  box-shadow: 0 0 18px rgba(251,191,36,0.15); }
+        .emoji-bubble.green  { border-color: rgba(16,185,129,0.5);  box-shadow: 0 0 18px rgba(16,185,129,0.15); }
+        .emoji-bubble.violet { border-color: rgba(167,139,250,0.5); box-shadow: 0 0 18px rgba(167,139,250,0.15); }
+        .emoji-bubble.pink   { border-color: rgba(244,114,182,0.5); box-shadow: 0 0 18px rgba(244,114,182,0.15); }
+        @keyframes emojiFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            33%       { transform: translateY(-14px) rotate(3deg); }
+            66%       { transform: translateY(-6px) rotate(-2deg); }
+        }
+        /* thought bubble dots */
+        .thought-dot {
+            position: absolute;
+            border-radius: 50%;
+            background: #22d3ee;
+            animation: dotPulse 1.8s ease-in-out infinite;
+        }
+        @keyframes dotPulse {
+            0%, 100% { opacity: 0.3; transform: scale(0.8); }
+            50%       { opacity: 0.9; transform: scale(1.1); }
+        }
     </style>
     <style>
         #bgCanvas {
@@ -534,270 +594,37 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
 
         const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 200);
-        camera.position.set(2.5, 0, 14);
-        camera.lookAt(2.5, 0, 0);
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 200);
+        camera.position.set(0, 0, 14);
+        camera.lookAt(0, 0, 0);
 
         const ADD = THREE.AdditiveBlending;
 
-        /* ── LIGHTS ─────────────────────────────────────── */
-        scene.add(new THREE.AmbientLight(0x0d1b2a, 3));
-        const cyanLight = new THREE.PointLight(0x22d3ee, 3, 22);
-        cyanLight.position.set(3, 5, 6);
-        scene.add(cyanLight);
-        const violetLight = new THREE.PointLight(0xa78bfa, 2, 18);
-        violetLight.position.set(-3, -2, 4);
-        scene.add(violetLight);
-
-        /* ── WORLD GROUP (tilts with mouse) ─────────────── */
-        const world = new THREE.Group();
-        scene.add(world);
-
-        /* ── PERSON GROUP ────────────────────────────────── */
-        const person = new THREE.Group();
-        person.position.set(1.2, -0.3, 0);
-        world.add(person);
-
-        // Materials
-        const bodyMat   = new THREE.MeshPhongMaterial({ color: 0x0d1f35, shininess: 60 });
-        const suitMat   = new THREE.MeshPhongMaterial({ color: 0x0f2744, shininess: 40, emissive: 0x061220 });
-        const cyanMat   = new THREE.MeshPhongMaterial({ color: 0x22d3ee, emissive: 0x0a6070, shininess: 80 });
-        const skinMat   = new THREE.MeshPhongMaterial({ color: 0x1a3a5c, shininess: 30 });
-        const eyeMat    = new THREE.MeshBasicMaterial({ color: 0x22d3ee });
-        const glowMat   = (c, op) => new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: op, blending: ADD, depthWrite: false });
-
-        // Head
-        const head = new THREE.Mesh(new THREE.SphereGeometry(0.52, 20, 20), bodyMat);
-        head.position.set(0, 3.1, 0);
-        person.add(head);
-
-        // Subtle head glow
-        const headGlow = new THREE.Mesh(new THREE.SphereGeometry(0.58, 16, 16), glowMat(0x22d3ee, 0.07));
-        headGlow.position.copy(head.position);
-        person.add(headGlow);
-
-        // Eyes
-        [[-0.17, 3.18, 0.46], [0.17, 3.18, 0.46]].forEach(([x, y, z]) => {
-            const eye = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 8), eyeMat);
-            eye.position.set(x, y, z);
-            person.add(eye);
-            // Eye glow
-            const eg = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 8), glowMat(0x22d3ee, 0.3));
-            eg.position.set(x, y, z);
-            person.add(eg);
-        });
-
-        // Neck
-        const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.28, 10), bodyMat);
-        neck.position.set(0, 2.55, 0);
-        person.add(neck);
-
-        // Torso
-        const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.30, 1.55, 12), suitMat);
-        torso.position.set(0, 1.75, 0);
-        person.add(torso);
-
-        // Jacket lapel glow strip
-        const lapel = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.9, 0.05), glowMat(0x22d3ee, 0.5));
-        lapel.position.set(0, 1.8, 0.36);
-        person.add(lapel);
-
-        // RIGHT ARM — raised thinking pose (elbow up, hand near chin)
-        const rShoulderGrp = new THREE.Group();
-        rShoulderGrp.position.set(0.40, 2.42, 0);
-        // Upper arm (angled up-outward)
-        const rUpper = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.09, 0.75, 8), suitMat);
-        rUpper.rotation.z = -Math.PI * 0.45;
-        rUpper.position.set(0.28, 0.24, 0);
-        rShoulderGrp.add(rUpper);
-        // Forearm (angled inward toward chin)
-        const rFore = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.65, 8), suitMat);
-        rFore.rotation.z = Math.PI * 0.3;
-        rFore.position.set(0.58, 0.58, 0.05);
-        rShoulderGrp.add(rFore);
-        person.add(rShoulderGrp);
-
-        // Right hand (fist at chin)
-        const rHand = new THREE.Mesh(new THREE.SphereGeometry(0.13, 10, 10), cyanMat);
-        rHand.position.set(0.62, 2.84, 0.18);
-        person.add(rHand);
-        const rHandGlow = new THREE.Mesh(new THREE.SphereGeometry(0.18, 10, 10), glowMat(0x22d3ee, 0.25));
-        rHandGlow.position.copy(rHand.position);
-        person.add(rHandGlow);
-
-        // LEFT ARM — relaxed at side, slightly forward
-        const lShoulderGrp = new THREE.Group();
-        lShoulderGrp.position.set(-0.40, 2.42, 0);
-        const lUpper = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.09, 0.85, 8), suitMat);
-        lUpper.rotation.z = Math.PI * 0.18;
-        lUpper.position.set(-0.22, -0.28, 0);
-        lShoulderGrp.add(lUpper);
-        const lFore = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.75, 8), suitMat);
-        lFore.rotation.z = -Math.PI * 0.08;
-        lFore.position.set(-0.32, -0.92, 0.06);
-        lShoulderGrp.add(lFore);
-        person.add(lShoulderGrp);
-
-        // Legs
-        [[-0.18, 0.9, -0.04], [0.18, 0.9, 0.04]].forEach(([x, sz, rz]) => {
-            const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.11, 1.25, 10), suitMat);
-            leg.position.set(x, 0.42, 0);
-            leg.rotation.z = rz;
-            person.add(leg);
-        });
-
-        // Feet
-        [[-0.26, -0.2, 0.12], [0.26, -0.2, 0.12]].forEach(([x, y, z]) => {
-            const foot = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 8), bodyMat);
-            foot.scale.set(1.4, 0.7, 1.6);
-            foot.position.set(x, y, z);
-            person.add(foot);
-        });
-
-        // Shadow / ground glow
-        const ground = new THREE.Mesh(
-            new THREE.CircleGeometry(1.1, 32),
-            new THREE.MeshBasicMaterial({ color: 0x22d3ee, transparent: true, opacity: 0.06, blending: ADD, depthWrite: false })
-        );
-        ground.rotation.x = -Math.PI / 2;
-        ground.position.set(0, -0.38, 0);
-        person.add(ground);
-
-        /* ── THOUGHT BUBBLE DOTS (head → 🤔) ────────────── */
-        const thoughtDots = [0, 1, 2].map(i => {
-            const r = 0.05 + i * 0.04;
-            const dot = new THREE.Mesh(new THREE.SphereGeometry(r, 8, 8),
-                new THREE.MeshBasicMaterial({ color: 0x22d3ee, transparent: true, opacity: 0.6 }));
-            dot.position.set(0.5 + i * 0.45, 3.85 + i * 0.2, 0.1);
-            dot.userData.i = i;
-            world.add(dot);
-            return dot;
-        });
-
-        /* ── EMOJI SPRITES ───────────────────────────────── */
-        function makeEmoji(emoji, borderColor) {
-            const sz = 256;
-            const c = document.createElement('canvas');
-            c.width = sz; c.height = sz;
-            const ctx = c.getContext('2d');
-
-            // Outer glow ring
-            const grad = ctx.createRadialGradient(sz/2,sz/2,sz*0.3, sz/2,sz/2,sz*0.5);
-            grad.addColorStop(0, borderColor + '33');
-            grad.addColorStop(1, 'transparent');
-            ctx.fillStyle = grad;
-            ctx.beginPath(); ctx.arc(sz/2,sz/2,sz*0.5,0,Math.PI*2); ctx.fill();
-
-            // Bubble background
-            ctx.fillStyle = 'rgba(8, 14, 32, 0.88)';
-            ctx.beginPath(); ctx.arc(sz/2,sz/2,sz*0.40,0,Math.PI*2); ctx.fill();
-
-            // Border
-            ctx.strokeStyle = borderColor;
-            ctx.lineWidth = 7;
-            ctx.beginPath(); ctx.arc(sz/2,sz/2,sz*0.40,0,Math.PI*2); ctx.stroke();
-
-            // Emoji
-            ctx.font = `${sz*0.40}px serif`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(emoji, sz/2, sz/2 + 4);
-
-            return new THREE.CanvasTexture(c);
-        }
-
-        const emojiCfg = [
-            { emoji: '🤔', x: 2.6,  y: 2.8,  z: 0.6,  spd: 0.65, sc: 1.15, col: '#22d3ee' },
-            { emoji: '💡', x: -1.6, y: 2.5,  z: 0.4,  spd: 0.50, sc: 1.0,  col: '#fbbf24' },
-            { emoji: '💰', x: 3.4,  y: 0.4,  z: 0.3,  spd: 0.85, sc: 0.9,  col: '#10b981' },
-            { emoji: '📊', x: -2.2, y: 0.0,  z: 0.5,  spd: 0.60, sc: 0.92, col: '#a78bfa' },
-            { emoji: '❓', x: 2.0,  y: -1.4, z: 0.7,  spd: 1.0,  sc: 0.82, col: '#f472b6' },
-            { emoji: '✨', x: -0.4, y: 4.2,  z: 0.5,  spd: 0.78, sc: 0.78, col: '#22d3ee' },
-            { emoji: '🔍', x: 3.9,  y: 1.6,  z: 0.2,  spd: 0.58, sc: 0.88, col: '#22d3ee' },
-        ];
-
-        const emojiSprites = emojiCfg.map(d => {
-            const tex = makeEmoji(d.emoji, d.col);
-            const sp  = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: 0.92 }));
-            sp.scale.setScalar(d.sc * 1.55);
-            sp.position.set(d.x, d.y, d.z);
-            sp.userData = { ...d, baseX: d.x, baseY: d.y };
-            world.add(sp);
-            return sp;
-        });
-
-        /* ── STAR FIELD ──────────────────────────────────── */
-        const STARS = 350;
+        /* ── STAR FIELD ONLY ────────────────────────────── */
+        const STARS = 400;
         const sg = new THREE.BufferGeometry();
         const sp2 = new Float32Array(STARS * 3);
         for (let i = 0; i < STARS; i++) {
-            sp2[i*3]   = (Math.random() - 0.5) * 80;
-            sp2[i*3+1] = (Math.random() - 0.5) * 60;
+            sp2[i*3]   = (Math.random() - 0.5) * 100;
+            sp2[i*3+1] = (Math.random() - 0.5) * 70;
             sp2[i*3+2] = (Math.random() - 0.5) * 40 - 15;
         }
         sg.setAttribute('position', new THREE.BufferAttribute(sp2, 3));
         scene.add(new THREE.Points(sg, new THREE.PointsMaterial({
-            color: 0xffffff, size: 0.06, transparent: true, opacity: 0.4,
+            color: 0xffffff, size: 0.07, transparent: true, opacity: 0.45,
             blending: ADD, depthWrite: false,
         })));
 
-        /* ── MOUSE ───────────────────────────────────────── */
-        const mouse  = { x: 0, y: 0 };
-        const smooth = { x: 0, y: 0 };
-        window.addEventListener('mousemove', e => {
-            mouse.x =  (e.clientX / window.innerWidth  - 0.5) * 2;
-            mouse.y = -(e.clientY / window.innerHeight - 0.5) * 2;
-        });
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        /* ── ANIMATION LOOP ──────────────────────────────── */
-        let frame = 0;
-        function animate() {
+        (function animate() {
             requestAnimationFrame(animate);
-            const t = (frame++) * 0.016;
-
-            smooth.x += (mouse.x - smooth.x) * 0.05;
-            smooth.y += (mouse.y - smooth.y) * 0.05;
-
-            // World tilts with cursor
-            world.rotation.y = smooth.x * 0.14;
-            world.rotation.x = -smooth.y * 0.09;
-
-            // Person subtle breathing / idle sway
-            person.position.y = -0.3 + Math.sin(t * 0.9) * 0.06;
-            person.rotation.y = smooth.x * 0.08;
-
-            // Thought bubble dots pulse
-            thoughtDots.forEach(dot => {
-                dot.material.opacity = 0.3 + Math.abs(Math.sin(t * 1.8 + dot.userData.i * 0.9)) * 0.65;
-                dot.scale.setScalar(0.85 + Math.abs(Math.sin(t * 1.8 + dot.userData.i * 0.9)) * 0.3);
-            });
-
-            // Emojis float, bob, and slowly drift
-            emojiSprites.forEach((sp, i) => {
-                const d = sp.userData;
-                const ph = i * 1.1;
-                sp.position.y = d.baseY + Math.sin(t * d.spd + ph) * 0.40;
-                sp.position.x = d.baseX + Math.cos(t * d.spd * 0.45 + ph) * 0.15;
-                sp.material.opacity = 0.75 + Math.sin(t * 0.6 + ph) * 0.18;
-            });
-
-            // Lights pulse slightly
-            cyanLight.intensity   = 2.5 + Math.sin(t * 1.1) * 0.5;
-            violetLight.intensity = 1.8 + Math.sin(t * 0.7 + 1.2) * 0.4;
-
-            // Camera parallax
-            camera.position.x += (2.5 + smooth.x * 1.6 - camera.position.x) * 0.04;
-            camera.position.y += (smooth.y * 1.1 - camera.position.y) * 0.04;
-            camera.lookAt(2.5, 0, 0);
-
             renderer.render(scene, camera);
-        }
-        animate();
+        })();
 
     })();
     </script>
@@ -844,21 +671,163 @@
             </div>
         </div>
 
-        <!-- RIGHT 40% — orb shines through -->
+        <!-- RIGHT 40% — person illustration -->
         <div class="hero-right">
-            <div class="hero-feature-list">
-                <div class="hero-feature-item">
-                    Pairwise Overlap Analysis <span class="arrow">→</span>
-                </div>
-                <div class="hero-feature-item">
-                    Redundant Fund Detection <span class="arrow">→</span>
-                </div>
-                <div class="hero-feature-item">
-                    Common Stock Weightages <span class="arrow">→</span>
-                </div>
-                <div class="hero-feature-item">
-                    AI Portfolio Suggestions <span class="arrow">→</span>
-                </div>
+            <div class="person-scene">
+
+                <!-- Thought bubble dots -->
+                <div class="thought-dot" style="width:8px;height:8px;top:18%;left:55%;animation-delay:0s;"></div>
+                <div class="thought-dot" style="width:11px;height:11px;top:14%;left:61%;animation-delay:0.3s;"></div>
+                <div class="thought-dot" style="width:14px;height:14px;top:9%;left:68%;animation-delay:0.6s;"></div>
+
+                <!-- Emoji bubbles -->
+                <div class="emoji-bubble"        style="top:4%; left:66%; --dur:3.2s; --delay:0s;">🤔</div>
+                <div class="emoji-bubble gold"   style="top:8%; left:12%; --dur:3.8s; --delay:0.5s; width:54px;height:54px;font-size:1.4rem;">💡</div>
+                <div class="emoji-bubble green"  style="top:38%;left:4%;  --dur:2.9s; --delay:1.1s; width:54px;height:54px;font-size:1.4rem;">💰</div>
+                <div class="emoji-bubble violet" style="top:55%;left:76%; --dur:3.5s; --delay:0.7s; width:50px;height:50px;font-size:1.3rem;">📊</div>
+                <div class="emoji-bubble pink"   style="top:72%;left:10%; --dur:4.0s; --delay:1.4s; width:50px;height:50px;font-size:1.3rem;">❓</div>
+                <div class="emoji-bubble"        style="top:80%;left:62%; --dur:3.1s; --delay:0.9s; width:46px;height:46px;font-size:1.2rem;">✨</div>
+                <div class="emoji-bubble"        style="top:22%;left:80%; --dur:3.6s; --delay:1.8s; width:48px;height:48px;font-size:1.25rem;">🔍</div>
+
+                <!-- SVG Person — flat illustration, thinking pose -->
+                <svg class="person-svg" viewBox="0 0 260 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <radialGradient id="bgGlow" cx="50%" cy="60%" r="50%">
+                            <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.12"/>
+                            <stop offset="100%" stop-color="#22d3ee" stop-opacity="0"/>
+                        </radialGradient>
+                        <radialGradient id="faceShade" cx="40%" cy="35%" r="60%">
+                            <stop offset="0%" stop-color="#f0c090"/>
+                            <stop offset="100%" stop-color="#c98a55"/>
+                        </radialGradient>
+                        <linearGradient id="suitGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#1a3a5f"/>
+                            <stop offset="100%" stop-color="#0d1f35"/>
+                        </linearGradient>
+                        <filter id="softGlow">
+                            <feGaussianBlur stdDeviation="3" result="blur"/>
+                            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                        </filter>
+                    </defs>
+
+                    <!-- Ambient body glow -->
+                    <ellipse cx="130" cy="280" rx="110" ry="150" fill="url(#bgGlow)"/>
+
+                    <!-- Shadow on ground -->
+                    <ellipse cx="130" cy="415" rx="60" ry="8" fill="#22d3ee" opacity="0.08"/>
+
+                    <!-- LEGS -->
+                    <rect x="94"  y="310" width="34" height="100" rx="14" fill="#0d1b2e"/>
+                    <rect x="132" y="310" width="34" height="100" rx="14" fill="#0d1b2e"/>
+
+                    <!-- SHOES -->
+                    <ellipse cx="111" cy="408" rx="28" ry="10" fill="#07111f"/>
+                    <ellipse cx="149" cy="408" rx="28" ry="10" fill="#07111f"/>
+
+                    <!-- BODY / SUIT -->
+                    <path d="M72 195 C60 220 58 280 62 315 L198 315 C202 280 200 220 188 195 C175 180 155 172 130 172 C105 172 85 180 72 195Z" fill="url(#suitGrad)"/>
+
+                    <!-- SHIRT / COLLAR inner -->
+                    <path d="M118 172 L130 195 L142 172 C138 170 133 168 130 168 C127 168 122 170 118 172Z" fill="#e8f4f8"/>
+
+                    <!-- SUIT lapels -->
+                    <path d="M118 172 L88 210 L115 205 L130 195Z" fill="#122840"/>
+                    <path d="M142 172 L172 210 L145 205 L130 195Z" fill="#122840"/>
+
+                    <!-- TIE -->
+                    <path d="M126 195 L134 195 L137 255 L130 265 L123 255Z" fill="#22d3ee" opacity="0.75"/>
+                    <path d="M128 194 L132 194 L133 210 L130 213 L127 210Z" fill="#17a8c0" opacity="0.9"/>
+
+                    <!-- Pocket square -->
+                    <path d="M172 215 L183 210 L186 222 L175 224Z" fill="#22d3ee" opacity="0.6"/>
+
+                    <!-- Belt -->
+                    <rect x="82" y="307" width="96" height="10" rx="5" fill="#0a1525"/>
+                    <rect x="124" y="306" width="12" height="12" rx="2" fill="#22d3ee" opacity="0.45"/>
+
+                    <!-- LEFT ARM (relaxed, slightly bent) -->
+                    <path d="M72 198 C55 215 48 245 50 270 C52 285 58 292 64 295" stroke="#0d1b2e" stroke-width="26" stroke-linecap="round" fill="none"/>
+                    <!-- Left sleeve cuff -->
+                    <rect x="52" y="284" width="22" height="14" rx="7" fill="#1a3a5f"/>
+                    <!-- Left hand -->
+                    <ellipse cx="63" cy="302" rx="14" ry="12" fill="url(#faceShade)"/>
+                    <!-- Fingers suggestion -->
+                    <path d="M54 298 Q63 293 72 298" stroke="#c07040" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+
+                    <!-- RIGHT ARM RAISED — thinking pose -->
+                    <!-- Upper arm going up-right -->
+                    <path d="M188 198 C205 188 215 175 212 158 C209 142 196 136 185 142 C176 147 172 162 176 182" stroke="#0d1b2e" stroke-width="26" stroke-linecap="round" fill="none"/>
+                    <!-- Forearm coming back toward chin -->
+                    <path d="M176 182 C170 172 162 162 150 157" stroke="#0d1b2e" stroke-width="24" stroke-linecap="round" fill="none"/>
+                    <!-- Right sleeve cuff -->
+                    <rect x="142" y="148" width="22" height="14" rx="7" fill="#1a3a5f"/>
+                    <!-- Right hand at chin -->
+                    <ellipse cx="148" cy="148" rx="15" ry="13" fill="url(#faceShade)"/>
+                    <!-- Knuckle line -->
+                    <path d="M138 144 Q148 140 158 144" stroke="#c07040" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+
+                    <!-- NECK -->
+                    <rect x="118" y="142" width="24" height="32" rx="10" fill="url(#faceShade)"/>
+
+                    <!-- HEAD -->
+                    <!-- Hair back -->
+                    <ellipse cx="130" cy="92" rx="54" ry="58" fill="#1a2535"/>
+                    <!-- Hair top shape -->
+                    <path d="M76 88 Q78 34 130 30 Q182 34 184 88" fill="#1a2535"/>
+                    <!-- Side burns -->
+                    <path d="M76 88 Q70 108 74 128 Q78 116 84 110Z" fill="#1a2535"/>
+                    <path d="M184 88 Q190 108 186 128 Q182 116 176 110Z" fill="#1a2535"/>
+
+                    <!-- Face -->
+                    <ellipse cx="130" cy="104" rx="50" ry="54" fill="url(#faceShade)"/>
+
+                    <!-- Ear left -->
+                    <ellipse cx="79" cy="106" rx="9" ry="13" fill="#c98a55"/>
+                    <ellipse cx="80" cy="106" rx="5" ry="9" fill="#b07040" opacity="0.5"/>
+                    <!-- Ear right -->
+                    <ellipse cx="181" cy="106" rx="9" ry="13" fill="#c98a55"/>
+                    <ellipse cx="180" cy="106" rx="5" ry="9" fill="#b07040" opacity="0.5"/>
+
+                    <!-- Eyebrows — left raised (thinking) -->
+                    <path d="M100 86 Q112 80 122 84" stroke="#5a3a20" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                    <!-- Right brow — normal -->
+                    <path d="M138 83 Q150 81 162 85" stroke="#5a3a20" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+                    <!-- Eyes -->
+                    <!-- Left eye -->
+                    <ellipse cx="111" cy="96" rx="12" ry="10" fill="white"/>
+                    <circle cx="113" cy="97" r="7" fill="#2d3a4a"/>
+                    <circle cx="113" cy="97" r="4" fill="#1a252f"/>
+                    <circle cx="115" cy="95" r="2" fill="white"/>
+                    <!-- Right eye looking up-left (thinking gaze) -->
+                    <ellipse cx="149" cy="95" rx="12" ry="10" fill="white"/>
+                    <circle cx="147" cy="94" r="7" fill="#2d3a4a"/>
+                    <circle cx="147" cy="94" r="4" fill="#1a252f"/>
+                    <circle cx="149" cy="92" r="2" fill="white"/>
+
+                    <!-- Eyelashes -->
+                    <path d="M99 92 Q100 88 101 86" stroke="#2d1a0a" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+                    <path d="M111 86 Q111 82 112 80" stroke="#2d1a0a" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+                    <path d="M123 88 Q125 85 127 84" stroke="#2d1a0a" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+
+                    <!-- Nose -->
+                    <path d="M127 108 Q130 120 133 108" stroke="#b07040" stroke-width="2" fill="none" stroke-linecap="round"/>
+                    <path d="M122 122 Q130 126 138 122" stroke="#b07040" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+
+                    <!-- Mouth — slight thinking expression -->
+                    <path d="M114 133 Q124 139 130 138 Q136 137 142 133" stroke="#9a5a30" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+
+                    <!-- Chin dimple -->
+                    <path d="M128 145 Q130 148 132 145" stroke="#b07040" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+
+                    <!-- Glow accent on jacket -->
+                    <path d="M130 185 L130 265" stroke="#22d3ee" stroke-width="1" opacity="0.2" stroke-dasharray="4 6"/>
+
+                    <!-- Cyan eye glow filter hint -->
+                    <circle cx="113" cy="97" r="4.5" fill="#22d3ee" opacity="0.08"/>
+                    <circle cx="147" cy="94" r="4.5" fill="#22d3ee" opacity="0.08"/>
+                </svg>
+
             </div>
         </div>
 
@@ -1347,6 +1316,21 @@
         document.getElementById('heroCtaBtn').addEventListener('click', () => {
             document.getElementById('uploadPanel').classList.remove('hidden');
         });
+
+        // —— Person scene cursor tilt ————————————————————————————————
+        const personScene = document.querySelector('.person-scene');
+        if (personScene) {
+            let smX = 0, smY = 0;
+            document.addEventListener('mousemove', e => {
+                const tx = (e.clientX / window.innerWidth  - 0.5) * 16;
+                const ty = (e.clientY / window.innerHeight - 0.5) * 10;
+                smX += (tx - smX) * 0.06;
+                smY += (ty - smY) * 0.06;
+                personScene.style.transform = `rotateY(${smX}deg) rotateX(${-smY}deg)`;
+            });
+            personScene.style.transformStyle = 'preserve-3d';
+            personScene.style.transition = 'transform 0.1s ease-out';
+        }
     </script>
 </body>
 </html>
