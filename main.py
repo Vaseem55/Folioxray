@@ -451,40 +451,41 @@ def is_international_fund(name: str) -> bool:
 @app.get("/debug-amfi")
 async def debug_amfi():
     """Test multiple MF data sources."""
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36", "Accept": "application/json, text/html"}
+    ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     results = {}
     async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as http_client:
-        # 1. Tickertape without entities
+        # 1. Moneycontrol MF search
         try:
-            r = await http_client.get("https://api.tickertape.in/search?text=axis+bluechip+direct", headers=headers)
-            results["tickertape"] = {"status": r.status_code, "body": r.json() if r.status_code == 200 else r.text[:300]}
+            r = await http_client.get(
+                "https://search.moneycontrol.com/solr/securities/select/?q=axis+bluechip+direct&fq=sc_type:MF&fl=sc_id,sc_name,sc_type&rows=5&wt=json",
+                headers={"User-Agent": ua}
+            )
+            results["mc_search"] = {"status": r.status_code, "body": r.json() if r.status_code == 200 else r.text[:300]}
         except Exception as e:
-            results["tickertape"] = {"error": str(e)}
+            results["mc_search"] = {"error": str(e)}
 
-        # 2. Groww scheme search (different endpoint)
+        # 2. Value Research Online - fund portfolio page (known fund ID for Axis Bluechip Direct)
         try:
-            r = await http_client.get("https://groww.in/v1/api/search/v3/query/global/scheme?q=axis+bluechip+direct+growth&page=0&size=3", headers={**headers, "Accept": "application/json", "Referer": "https://groww.in/"})
-            results["groww"] = {"status": r.status_code, "body": r.json() if r.status_code == 200 else r.text[:300]}
-        except Exception as e:
-            results["groww"] = {"error": str(e)}
-
-        # 3. AMFI scheme portfolio page — scrape to find download links
-        try:
-            r = await http_client.get("https://www.amfiindia.com/research-information/other-data/scheme-portfolio", headers={**headers, "Accept": "text/html"})
-            # Find any .txt or download links in the page
+            r = await http_client.get(
+                "https://www.valueresearchonline.com/funds/15088/axis-bluechip-fund/?tab=portfolio",
+                headers={"User-Agent": ua, "Accept": "text/html", "Referer": "https://www.valueresearchonline.com/"}
+            )
             import re as _re
-            links = _re.findall(r'href=["\']([^"\']*portfolio[^"\']*)["\']', r.text, _re.IGNORECASE)
-            api_calls = _re.findall(r'(https?://[^\s"\'<>]*portfolio[^\s"\'<>]*)', r.text, _re.IGNORECASE)
-            results["amfi_page"] = {"status": r.status_code, "portfolio_links": links[:10], "api_calls_found": api_calls[:10]}
+            # Look for holdings table data
+            tables = _re.findall(r'<table[^>]*>(.*?)</table>', r.text, _re.DOTALL | _re.IGNORECASE)
+            holdings_hint = r.text[r.text.lower().find('hdfc'):r.text.lower().find('hdfc')+200] if 'hdfc' in r.text.lower() else "not found"
+            results["vro"] = {"status": r.status_code, "size": len(r.text), "tables_found": len(tables), "hdfc_context": holdings_hint[:200]}
         except Exception as e:
-            results["amfi_page"] = {"error": str(e)}
+            results["vro"] = {"error": str(e)}
 
-        # 4. Try AMFI portal download
+        # 3. mfapi full list (truncated) to confirm scheme codes work
         try:
-            r = await http_client.get("https://portal.amfiindia.com/DownloadData.aspx?mPortfolioType=BS&distributor=AMFI", headers=headers)
-            results["amfi_portal"] = {"status": r.status_code, "size": len(r.text), "first_200": r.text[:200]}
+            r = await http_client.get("https://api.mfapi.in/mf", headers={"User-Agent": ua})
+            data = r.json() if r.status_code == 200 else []
+            axis = [x for x in data if "axis" in x.get("schemeName","").lower() and "bluechip" in x.get("schemeName","").lower() and "direct" in x.get("schemeName","").lower()]
+            results["mfapi_list"] = {"status": r.status_code, "total_schemes": len(data), "axis_bluechip_direct": axis[:5]}
         except Exception as e:
-            results["amfi_portal"] = {"error": str(e)}
+            results["mfapi_list"] = {"error": str(e)}
 
     return JSONResponse(content=results)
 
