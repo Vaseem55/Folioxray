@@ -200,6 +200,12 @@ async def fetch_live_market_holdings(fund_name: str) -> list:
     if fund_name in FUND_HOLDINGS_CACHE:
         return FUND_HOLDINGS_CACHE[fund_name]
 
+    # Skip non-equity funds — they have no stock holdings to compare
+    if is_non_equity_fund(fund_name) or is_international_fund(fund_name):
+        print(f"Skipping non-equity/international: '{fund_name}'")
+        FUND_HOLDINGS_CACHE[fund_name] = []
+        return []
+
     # Static DB lookup — fast, no network needed
     holdings, matched = lookup_fund_holdings(fund_name)
     if holdings:
@@ -459,6 +465,21 @@ INTERNATIONAL_KEYWORDS = [
 def is_international_fund(name: str) -> bool:
     lower = name.lower()
     return any(kw in lower for kw in INTERNATIONAL_KEYWORDS)
+
+
+NON_EQUITY_KEYWORDS = [
+    "liquid", "overnight", "money market", "ultra short", "low duration",
+    "short duration", "medium duration", "long duration", "gilt", "g-sec",
+    "debt", "bond", "banking and psu", "corporate bond", "credit risk",
+    "floater", "arbitrage", "gold", "silver", "commodity", "etf",
+    "nifty 50", "nifty50", "nifty next 50", "sensex", "index fund",
+    "nifty 100", "nifty 500", "bse", "capital market index", "balanced advantage",
+    "dynamic asset", "multi asset", "hybrid", "conservative",
+]
+
+def is_non_equity_fund(name: str) -> bool:
+    lower = name.lower()
+    return any(kw in lower for kw in NON_EQUITY_KEYWORDS)
 
 
 # =====================================================================
