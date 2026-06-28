@@ -345,6 +345,20 @@ async def build_full_report(domestic_portfolio: list) -> dict:
             })
     pair_overlaps.sort(key=lambda x: x["overlap_percent"], reverse=True)
 
+    # Override AI's category-based overlap with actual stock-level overlap
+    # Only flag funds as redundant if they actually share stocks above threshold
+    REDUNDANT_THRESHOLD = 10.0  # % overlap to be considered redundant
+    truly_redundant_fund_names = set()
+    for pair in pair_overlaps:
+        if pair["overlap_percent"] >= REDUNDANT_THRESHOLD:
+            truly_redundant_fund_names.add(pair["fund_a"])
+            truly_redundant_fund_names.add(pair["fund_b"])
+
+    # Filter overlapping_funds_rich to only include truly redundant funds
+    mapped_overlapping_funds = [f for f in mapped_overlapping_funds if f["scheme_name"] in truly_redundant_fund_names]
+    if not mapped_overlapping_funds:
+        ai_advice["overlap_detected"] = False
+
     ai_advice["overlapping_funds_rich"] = mapped_overlapping_funds
     ai_advice["overlapping_stocks_detail"] = final_overlapping_stocks
     ai_advice["pair_overlaps"] = pair_overlaps
