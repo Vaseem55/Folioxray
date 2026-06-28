@@ -451,12 +451,11 @@ def is_international_fund(name: str) -> bool:
 @app.get("/debug-amfi")
 async def debug_amfi():
     """Test multiple MF data sources."""
-    q = "Axis+Bluechip+Direct+Growth"
     tests = {
-        "groww_search": f"https://groww.in/v1/api/search/v3/query/global/scheme?q={q}&page=0&size=3",
-        "kuvera": "https://api.kuvera.in/api/v4/fund_schemes.json?query=axis+bluechip+direct&per_page=3",
-        "tickertape": f"https://api.tickertape.in/search?q={q}&entities=mutualfund",
-        "mfapi_search": "https://api.mfapi.in/mf/search?q=axis+bluechip+direct",
+        "groww_search": "https://groww.in/v1/api/search/v3/query/global/scheme?q=axis+bluechip&page=0&size=3",
+        "tickertape_text": "https://api.tickertape.in/search?text=axis+bluechip+direct&entities=mutualfund",
+        "mfapi_axis": "https://api.mfapi.in/mf/search?q=axis+bluechip",
+        "mfapi_hdfc": "https://api.mfapi.in/mf/search?q=hdfc+top+100",
     }
     headers = {"User-Agent": "Mozilla/5.0", "Accept": "application/json"}
     results = {}
