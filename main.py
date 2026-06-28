@@ -198,28 +198,18 @@ async def fetch_from_vro(fund_name: str, http_client: httpx.AsyncClient) -> list
 
 async def fetch_live_market_holdings(fund_name: str) -> list:
     if fund_name in FUND_HOLDINGS_CACHE:
-        print(f"Cache hit: {fund_name}")
         return FUND_HOLDINGS_CACHE[fund_name]
 
-    # Check static DB first (fast, reliable, no network)
+    # Static DB lookup — fast, no network needed
     holdings, matched = lookup_fund_holdings(fund_name)
     if holdings:
-        print(f"Static DB match: '{fund_name}' -> '{matched}' ({len(holdings)} holdings)")
+        print(f"DB: '{fund_name}' -> '{matched}' ({len(holdings)} holdings)")
         FUND_HOLDINGS_CACHE[fund_name] = holdings
         return holdings
 
-    print(f"Fetching holdings for: {fund_name}")
-    holdings = []
-    async with httpx.AsyncClient(timeout=20.0, follow_redirects=True) as http_client:
-        holdings = await fetch_holdings_from_amfi(fund_name, http_client)
-        if not holdings:
-            holdings = await fetch_from_vro(fund_name, http_client)
-    if not holdings:
-        print(f"  No data found for '{fund_name}'")
-
-    FUND_HOLDINGS_CACHE[fund_name] = holdings
-    save_cache(FUND_HOLDINGS_CACHE)
-    return holdings
+    print(f"Not in DB: '{fund_name}' — returning empty")
+    FUND_HOLDINGS_CACHE[fund_name] = []
+    return []
 
 
 # =====================================================================
@@ -267,11 +257,18 @@ async def analyze_portfolio_categories(portfolio_data: list) -> dict:
 # =====================================================================
 
 async def build_full_report(domestic_portfolio: list) -> dict:
+    import asyncio
+
+    # Fetch holdings for ALL domestic funds in parallel (static DB = instant)
+    all_names = [f["scheme_name"] for f in domestic_portfolio]
+    holdings_results = await asyncio.gather(*[fetch_live_market_holdings(n) for n in all_names])
+    fund_holdings_map = {name: h for name, h in zip(all_names, holdings_results)}
+
+    # Run AI category analysis in parallel with holdings fetch (already done above)
     ai_advice = await analyze_portfolio_categories(domestic_portfolio)
 
     overlapping_stocks_master = {}
     mapped_overlapping_funds = []
-    fund_holdings_map = {}
 
     already_matched = set()
     for target_fund in ai_advice.get("overlapping_funds", []):
@@ -288,8 +285,7 @@ async def build_full_report(domestic_portfolio: list) -> dict:
                 break
 
         mapped_overlapping_funds.append({"scheme_name": exact_name, "current_value_inr": matched_value})
-        live_holdings = await fetch_live_market_holdings(exact_name)
-        fund_holdings_map[exact_name] = live_holdings
+        live_holdings = fund_holdings_map.get(exact_name, [])
 
         for holding in live_holdings:
             stock = (holding.get("stock_name") or holding.get("name") or
