@@ -410,13 +410,12 @@
         // â”€â”€ Render full report (after payment verified) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         function renderReport(data) {
             const totalValue = data.total_portfolio_value;
-            const advice = data.ai_advice;
-
-            if (!advice || !advice.overlap_detected) return;
+            const advice = data.ai_advice || {};
 
             document.getElementById('paywallCard').classList.add('hidden');
             document.getElementById('aiAdviceSection').classList.remove('hidden');
-            document.getElementById('aiSummary').innerText = advice.analysis_summary;
+            document.getElementById('aiSummary').innerText = advice.analysis_summary ||
+                'Great news! Your portfolio shows no significant stock-level overlap between equity funds. Your funds are well-diversified across different stocks.';
 
             // Metric cards
             const redundantFunds = advice.overlapping_funds_rich || [];
