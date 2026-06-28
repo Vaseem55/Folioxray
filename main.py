@@ -14,6 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from openai import AsyncOpenAI
 from dotenv import load_dotenv
 import casparser
+from fund_holdings_db import lookup_fund_holdings
 
 load_dotenv()
 
@@ -197,27 +198,27 @@ async def fetch_from_vro(fund_name: str, http_client: httpx.AsyncClient) -> list
 
 async def fetch_live_market_holdings(fund_name: str) -> list:
     if fund_name in FUND_HOLDINGS_CACHE:
-        print(f"⚡ CACHE HIT: {fund_name}")
+        print(f"Cache hit: {fund_name}")
         return FUND_HOLDINGS_CACHE[fund_name]
 
-    print(f"🔍 Fetching holdings for: {fund_name}")
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        "Accept": "application/json",
-    }
+    # Check static DB first (fast, reliable, no network)
+    holdings, matched = lookup_fund_holdings(fund_name)
+    if holdings:
+        print(f"Static DB match: '{fund_name}' -> '{matched}' ({len(holdings)} holdings)")
+        FUND_HOLDINGS_CACHE[fund_name] = holdings
+        return holdings
+
+    print(f"Fetching holdings for: {fund_name}")
     holdings = []
-    async with httpx.AsyncClient(headers=headers, timeout=20.0, follow_redirects=True) as http_client:
-        # Try AMFI real data first
+    async with httpx.AsyncClient(timeout=20.0, follow_redirects=True) as http_client:
         holdings = await fetch_holdings_from_amfi(fund_name, http_client)
-        # Fallback to VRO scrape
         if not holdings:
             holdings = await fetch_from_vro(fund_name, http_client)
     if not holdings:
-        print(f"  ⚠️ No real data found for '{fund_name}' — skipping (not using AI estimates)")
+        print(f"  No data found for '{fund_name}'")
 
     FUND_HOLDINGS_CACHE[fund_name] = holdings
     save_cache(FUND_HOLDINGS_CACHE)
-    print(f"💾 Saved {len(holdings)} holdings for '{fund_name}' to cache.")
     return holdings
 
 
