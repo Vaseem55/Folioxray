@@ -451,22 +451,41 @@ def is_international_fund(name: str) -> bool:
 @app.get("/debug-amfi")
 async def debug_amfi():
     """Test multiple MF data sources."""
-    tests = {
-        "groww_search": "https://groww.in/v1/api/search/v3/query/global/scheme?q=axis+bluechip&page=0&size=3",
-        "tickertape_text": "https://api.tickertape.in/search?text=axis+bluechip+direct&entities=mutualfund",
-        "mfapi_axis": "https://api.mfapi.in/mf/search?q=axis+bluechip",
-        "mfapi_hdfc": "https://api.mfapi.in/mf/search?q=hdfc+top+100",
-    }
-    headers = {"User-Agent": "Mozilla/5.0", "Accept": "application/json"}
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36", "Accept": "application/json, text/html"}
     results = {}
-    async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as http_client:
-        for name, url in tests.items():
-            try:
-                r = await http_client.get(url, headers=headers)
-                body = r.json() if "json" in r.headers.get("content-type", "") else r.text[:200]
-                results[name] = {"status": r.status_code, "body": body}
-            except Exception as e:
-                results[name] = {"error": str(e)}
+    async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as http_client:
+        # 1. Tickertape without entities
+        try:
+            r = await http_client.get("https://api.tickertape.in/search?text=axis+bluechip+direct", headers=headers)
+            results["tickertape"] = {"status": r.status_code, "body": r.json() if r.status_code == 200 else r.text[:300]}
+        except Exception as e:
+            results["tickertape"] = {"error": str(e)}
+
+        # 2. Groww scheme search (different endpoint)
+        try:
+            r = await http_client.get("https://groww.in/v1/api/search/v3/query/global/scheme?q=axis+bluechip+direct+growth&page=0&size=3", headers={**headers, "Accept": "application/json", "Referer": "https://groww.in/"})
+            results["groww"] = {"status": r.status_code, "body": r.json() if r.status_code == 200 else r.text[:300]}
+        except Exception as e:
+            results["groww"] = {"error": str(e)}
+
+        # 3. AMFI scheme portfolio page — scrape to find download links
+        try:
+            r = await http_client.get("https://www.amfiindia.com/research-information/other-data/scheme-portfolio", headers={**headers, "Accept": "text/html"})
+            # Find any .txt or download links in the page
+            import re as _re
+            links = _re.findall(r'href=["\']([^"\']*portfolio[^"\']*)["\']', r.text, _re.IGNORECASE)
+            api_calls = _re.findall(r'(https?://[^\s"\'<>]*portfolio[^\s"\'<>]*)', r.text, _re.IGNORECASE)
+            results["amfi_page"] = {"status": r.status_code, "portfolio_links": links[:10], "api_calls_found": api_calls[:10]}
+        except Exception as e:
+            results["amfi_page"] = {"error": str(e)}
+
+        # 4. Try AMFI portal download
+        try:
+            r = await http_client.get("https://portal.amfiindia.com/DownloadData.aspx?mPortfolioType=BS&distributor=AMFI", headers=headers)
+            results["amfi_portal"] = {"status": r.status_code, "size": len(r.text), "first_200": r.text[:200]}
+        except Exception as e:
+            results["amfi_portal"] = {"error": str(e)}
+
     return JSONResponse(content=results)
 
 
