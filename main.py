@@ -82,49 +82,63 @@ async def fetch_holdings_from_amfi(fund_name: str, http_client: httpx.AsyncClien
     def _sync_fetch(name):
         try:
             from mftool import Mftool
+            from difflib import SequenceMatcher
             mf = Mftool()
-            # Search for scheme code
             all_schemes = mf.get_scheme_codes()
             if not all_schemes:
                 return []
-            # Find best matching scheme code
-            name_lower = name.lower()
+
+            # Remove the header row if present
+            schemes = {k: v for k, v in all_schemes.items() if k != "Scheme Code"}
+
+            # Only consider Direct Growth variants to reduce noise
+            name_lower = name.lower().replace("-", " ").replace("  ", " ")
+            direct_schemes = {k: v for k, v in schemes.items()
+                              if "direct" in v.lower() and
+                              ("growth" in v.lower() or "gr" in v.lower())}
+
+            # Score each scheme by similarity
             best_code = None
-            best_score = 0
-            for code, scheme_name in all_schemes.items():
-                sname = scheme_name.lower()
-                # Score by word overlap
-                words = [w for w in name_lower.split() if len(w) > 3]
-                score = sum(1 for w in words if w in sname)
+            best_score = 0.0
+            for code, scheme_name in direct_schemes.items():
+                sname = scheme_name.lower().replace("-", " ").replace("  ", " ")
+                score = SequenceMatcher(None, name_lower, sname).ratio()
                 if score > best_score:
                     best_score = score
                     best_code = code
-            if not best_code or best_score < 2:
-                print(f"  mftool: no good match for '{name}' (best score {best_score})")
+                    best_name = scheme_name
+
+            print(f"  mftool best match: '{best_name}' (score {best_score:.2f}) for '{name}'")
+            if best_score < 0.45:
+                print(f"  mftool: score too low, skipping")
                 return []
+
             portfolio = mf.get_scheme_portfolio(best_code)
             if not portfolio or "portfolios" not in portfolio:
+                print(f"  mftool: no portfolios key in response: {list(portfolio.keys()) if portfolio else None}")
                 return []
-            holdings = portfolio["portfolios"]
+
             cleaned = []
-            for h in holdings:
-                stock = (h.get("nameOfInstrument") or h.get("sectorName") or "").strip()
-                weight = h.get("percentageToNav") or h.get("percentage") or 0
+            for h in portfolio["portfolios"]:
+                stock = (h.get("nameOfInstrument") or "").strip()
+                weight = h.get("percentageToNav") or 0
                 stock = re.sub(r'[^\w\s\.\-\(\)&,/]', '', stock, flags=re.ASCII).strip()
                 try:
-                    weight = float(weight)
+                    weight = float(str(weight).replace(",", ""))
                 except:
                     weight = 0.0
-                # Skip non-equity rows
-                if h.get("rating") or "bond" in stock.lower() or "tbill" in stock.lower():
+                # Skip debt/cash instruments (they have a rating field set)
+                if h.get("rating") and h["rating"].strip():
                     continue
                 if stock and weight > 0:
                     cleaned.append({"stock_name": stock, "weight_percent": weight})
+
             cleaned.sort(key=lambda x: x["weight_percent"], reverse=True)
-            print(f"  ✅ mftool: {len(cleaned)} holdings for '{name}'")
+            print(f"  ✅ mftool: {len(cleaned)} equity holdings for '{name}'")
             return cleaned[:15]
         except Exception as e:
-            print(f"  mftool error: {e}")
+            import traceback
+            print(f"  mftool error: {traceback.format_exc()}")
             return []
 
     loop = asyncio.get_event_loop()
@@ -439,10 +453,12 @@ async def debug_mftool():
                 return {"error": "get_scheme_codes returned empty"}
             # Find Axis Bluechip Direct
             matches = {k: v for k, v in codes.items()
-                       if "axis" in v.lower() and "bluechip" in v.lower() and "direct" in v.lower()}
+                       if "axis" in v.lower() and ("bluechip" in v.lower() or "blue chip" in v.lower()) and "direct" in v.lower()}
             if not matches:
+                # Show all Axis funds to see actual naming
+                axis_funds = {k: v for k, v in codes.items() if "axis" in v.lower() and "direct" in v.lower()}
                 return {"error": "No Axis Bluechip Direct found", "total_codes": len(codes),
-                        "sample": dict(list(codes.items())[:5])}
+                        "axis_direct_funds": dict(list(axis_funds.items())[:10])}
             code, name = next(iter(matches.items()))
             portfolio = mf.get_scheme_portfolio(code)
             return {"scheme_code": code, "scheme_name": name, "portfolio_keys": list(portfolio.keys()) if portfolio else None,
