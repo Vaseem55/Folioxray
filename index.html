@@ -535,96 +535,209 @@
 
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 200);
-        camera.position.set(2.5, 0, 13);
+        camera.position.set(2.5, 0, 14);
         camera.lookAt(2.5, 0, 0);
 
         const ADD = THREE.AdditiveBlending;
 
-        /* ── CENTRAL GLOW LAYERS (stacked spheres) ────────── */
-        [4.2, 3.2, 2.2, 1.4, 0.7].forEach((r, i) => {
-            const m = new THREE.Mesh(
-                new THREE.SphereGeometry(r, 32, 32),
-                new THREE.MeshBasicMaterial({
-                    color: i < 2 ? 0x0e4d6e : 0x22d3ee,
-                    transparent: true,
-                    opacity: [0.025, 0.045, 0.08, 0.14, 0.30][i],
-                    blending: ADD, depthWrite: false,
-                })
-            );
-            scene.add(m);
+        /* ── LIGHTS ─────────────────────────────────────── */
+        scene.add(new THREE.AmbientLight(0x0d1b2a, 3));
+        const cyanLight = new THREE.PointLight(0x22d3ee, 3, 22);
+        cyanLight.position.set(3, 5, 6);
+        scene.add(cyanLight);
+        const violetLight = new THREE.PointLight(0xa78bfa, 2, 18);
+        violetLight.position.set(-3, -2, 4);
+        scene.add(violetLight);
+
+        /* ── WORLD GROUP (tilts with mouse) ─────────────── */
+        const world = new THREE.Group();
+        scene.add(world);
+
+        /* ── PERSON GROUP ────────────────────────────────── */
+        const person = new THREE.Group();
+        person.position.set(1.2, -0.3, 0);
+        world.add(person);
+
+        // Materials
+        const bodyMat   = new THREE.MeshPhongMaterial({ color: 0x0d1f35, shininess: 60 });
+        const suitMat   = new THREE.MeshPhongMaterial({ color: 0x0f2744, shininess: 40, emissive: 0x061220 });
+        const cyanMat   = new THREE.MeshPhongMaterial({ color: 0x22d3ee, emissive: 0x0a6070, shininess: 80 });
+        const skinMat   = new THREE.MeshPhongMaterial({ color: 0x1a3a5c, shininess: 30 });
+        const eyeMat    = new THREE.MeshBasicMaterial({ color: 0x22d3ee });
+        const glowMat   = (c, op) => new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: op, blending: ADD, depthWrite: false });
+
+        // Head
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.52, 20, 20), bodyMat);
+        head.position.set(0, 3.1, 0);
+        person.add(head);
+
+        // Subtle head glow
+        const headGlow = new THREE.Mesh(new THREE.SphereGeometry(0.58, 16, 16), glowMat(0x22d3ee, 0.07));
+        headGlow.position.copy(head.position);
+        person.add(headGlow);
+
+        // Eyes
+        [[-0.17, 3.18, 0.46], [0.17, 3.18, 0.46]].forEach(([x, y, z]) => {
+            const eye = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 8), eyeMat);
+            eye.position.set(x, y, z);
+            person.add(eye);
+            // Eye glow
+            const eg = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 8), glowMat(0x22d3ee, 0.3));
+            eg.position.set(x, y, z);
+            person.add(eg);
         });
 
-        /* ── WIREFRAME SPHERE ─────────────────────────────── */
-        const wireSphere = new THREE.Mesh(
-            new THREE.SphereGeometry(1.5, 14, 14),
-            new THREE.MeshBasicMaterial({
-                color: 0x22d3ee, wireframe: true,
-                transparent: true, opacity: 0.18,
-                blending: ADD, depthWrite: false,
-            })
-        );
-        scene.add(wireSphere);
+        // Neck
+        const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.28, 10), bodyMat);
+        neck.position.set(0, 2.55, 0);
+        person.add(neck);
 
-        /* ── ORBITAL RINGS ───────────────────────────────── */
-        const orbCfg = [
-            { radius: 3.0, rx: 0.30, ry: 0.10, color: 0x22d3ee, spd:  0.55, dots: 2 },
-            { radius: 3.7, rx: 1.25, ry: 0.60, color: 0xa78bfa, spd: -0.35, dots: 1 },
-            { radius: 4.3, rx: 0.70, ry: 1.40, color: 0x10b981, spd:  0.42, dots: 2 },
-            { radius: 4.9, rx: 1.80, ry: 0.30, color: 0xfbbf24, spd: -0.60, dots: 1 },
-            { radius: 2.5, rx: 0.90, ry: 1.70, color: 0xf472b6, spd:  0.80, dots: 1 },
+        // Torso
+        const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.30, 1.55, 12), suitMat);
+        torso.position.set(0, 1.75, 0);
+        person.add(torso);
+
+        // Jacket lapel glow strip
+        const lapel = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.9, 0.05), glowMat(0x22d3ee, 0.5));
+        lapel.position.set(0, 1.8, 0.36);
+        person.add(lapel);
+
+        // RIGHT ARM — raised thinking pose (elbow up, hand near chin)
+        const rShoulderGrp = new THREE.Group();
+        rShoulderGrp.position.set(0.40, 2.42, 0);
+        // Upper arm (angled up-outward)
+        const rUpper = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.09, 0.75, 8), suitMat);
+        rUpper.rotation.z = -Math.PI * 0.45;
+        rUpper.position.set(0.28, 0.24, 0);
+        rShoulderGrp.add(rUpper);
+        // Forearm (angled inward toward chin)
+        const rFore = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.65, 8), suitMat);
+        rFore.rotation.z = Math.PI * 0.3;
+        rFore.position.set(0.58, 0.58, 0.05);
+        rShoulderGrp.add(rFore);
+        person.add(rShoulderGrp);
+
+        // Right hand (fist at chin)
+        const rHand = new THREE.Mesh(new THREE.SphereGeometry(0.13, 10, 10), cyanMat);
+        rHand.position.set(0.62, 2.84, 0.18);
+        person.add(rHand);
+        const rHandGlow = new THREE.Mesh(new THREE.SphereGeometry(0.18, 10, 10), glowMat(0x22d3ee, 0.25));
+        rHandGlow.position.copy(rHand.position);
+        person.add(rHandGlow);
+
+        // LEFT ARM — relaxed at side, slightly forward
+        const lShoulderGrp = new THREE.Group();
+        lShoulderGrp.position.set(-0.40, 2.42, 0);
+        const lUpper = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.09, 0.85, 8), suitMat);
+        lUpper.rotation.z = Math.PI * 0.18;
+        lUpper.position.set(-0.22, -0.28, 0);
+        lShoulderGrp.add(lUpper);
+        const lFore = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.75, 8), suitMat);
+        lFore.rotation.z = -Math.PI * 0.08;
+        lFore.position.set(-0.32, -0.92, 0.06);
+        lShoulderGrp.add(lFore);
+        person.add(lShoulderGrp);
+
+        // Legs
+        [[-0.18, 0.9, -0.04], [0.18, 0.9, 0.04]].forEach(([x, sz, rz]) => {
+            const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.11, 1.25, 10), suitMat);
+            leg.position.set(x, 0.42, 0);
+            leg.rotation.z = rz;
+            person.add(leg);
+        });
+
+        // Feet
+        [[-0.26, -0.2, 0.12], [0.26, -0.2, 0.12]].forEach(([x, y, z]) => {
+            const foot = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 8), bodyMat);
+            foot.scale.set(1.4, 0.7, 1.6);
+            foot.position.set(x, y, z);
+            person.add(foot);
+        });
+
+        // Shadow / ground glow
+        const ground = new THREE.Mesh(
+            new THREE.CircleGeometry(1.1, 32),
+            new THREE.MeshBasicMaterial({ color: 0x22d3ee, transparent: true, opacity: 0.06, blending: ADD, depthWrite: false })
+        );
+        ground.rotation.x = -Math.PI / 2;
+        ground.position.set(0, -0.38, 0);
+        person.add(ground);
+
+        /* ── THOUGHT BUBBLE DOTS (head → 🤔) ────────────── */
+        const thoughtDots = [0, 1, 2].map(i => {
+            const r = 0.05 + i * 0.04;
+            const dot = new THREE.Mesh(new THREE.SphereGeometry(r, 8, 8),
+                new THREE.MeshBasicMaterial({ color: 0x22d3ee, transparent: true, opacity: 0.6 }));
+            dot.position.set(0.5 + i * 0.45, 3.85 + i * 0.2, 0.1);
+            dot.userData.i = i;
+            world.add(dot);
+            return dot;
+        });
+
+        /* ── EMOJI SPRITES ───────────────────────────────── */
+        function makeEmoji(emoji, borderColor) {
+            const sz = 256;
+            const c = document.createElement('canvas');
+            c.width = sz; c.height = sz;
+            const ctx = c.getContext('2d');
+
+            // Outer glow ring
+            const grad = ctx.createRadialGradient(sz/2,sz/2,sz*0.3, sz/2,sz/2,sz*0.5);
+            grad.addColorStop(0, borderColor + '33');
+            grad.addColorStop(1, 'transparent');
+            ctx.fillStyle = grad;
+            ctx.beginPath(); ctx.arc(sz/2,sz/2,sz*0.5,0,Math.PI*2); ctx.fill();
+
+            // Bubble background
+            ctx.fillStyle = 'rgba(8, 14, 32, 0.88)';
+            ctx.beginPath(); ctx.arc(sz/2,sz/2,sz*0.40,0,Math.PI*2); ctx.fill();
+
+            // Border
+            ctx.strokeStyle = borderColor;
+            ctx.lineWidth = 7;
+            ctx.beginPath(); ctx.arc(sz/2,sz/2,sz*0.40,0,Math.PI*2); ctx.stroke();
+
+            // Emoji
+            ctx.font = `${sz*0.40}px serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(emoji, sz/2, sz/2 + 4);
+
+            return new THREE.CanvasTexture(c);
+        }
+
+        const emojiCfg = [
+            { emoji: '🤔', x: 2.6,  y: 2.8,  z: 0.6,  spd: 0.65, sc: 1.15, col: '#22d3ee' },
+            { emoji: '💡', x: -1.6, y: 2.5,  z: 0.4,  spd: 0.50, sc: 1.0,  col: '#fbbf24' },
+            { emoji: '💰', x: 3.4,  y: 0.4,  z: 0.3,  spd: 0.85, sc: 0.9,  col: '#10b981' },
+            { emoji: '📊', x: -2.2, y: 0.0,  z: 0.5,  spd: 0.60, sc: 0.92, col: '#a78bfa' },
+            { emoji: '❓', x: 2.0,  y: -1.4, z: 0.7,  spd: 1.0,  sc: 0.82, col: '#f472b6' },
+            { emoji: '✨', x: -0.4, y: 4.2,  z: 0.5,  spd: 0.78, sc: 0.78, col: '#22d3ee' },
+            { emoji: '🔍', x: 3.9,  y: 1.6,  z: 0.2,  spd: 0.58, sc: 0.88, col: '#22d3ee' },
         ];
 
-        const ringGroups = orbCfg.map(cfg => {
-            const grp = new THREE.Group();
-            grp.rotation.set(cfg.rx, cfg.ry, 0);
-
-            // Ring — two torus layers for glow effect
-            [0.045, 0.018].forEach((thick, ti) => {
-                grp.add(new THREE.Mesh(
-                    new THREE.TorusGeometry(cfg.radius, thick, 8, 90),
-                    new THREE.MeshBasicMaterial({
-                        color: cfg.color, transparent: true,
-                        opacity: ti === 0 ? 0.18 : 0.60,
-                        blending: ADD, depthWrite: false,
-                    })
-                ));
-            });
-
-            // Glowing dots travelling the ring
-            const dots = Array.from({ length: cfg.dots }, (_, d) => {
-                const dg = new THREE.Group();
-                dg.userData.phase = (d / cfg.dots) * Math.PI * 2;
-                [0.20, 0.11, 0.06].forEach((r, ri) => {
-                    dg.add(new THREE.Mesh(
-                        new THREE.SphereGeometry(r, 8, 8),
-                        new THREE.MeshBasicMaterial({
-                            color: cfg.color, transparent: true,
-                            opacity: [0.25, 0.55, 1.0][ri],
-                            blending: ADD, depthWrite: false,
-                        })
-                    ));
-                });
-                grp.add(dg);
-                return dg;
-            });
-
-            grp.userData = { cfg, dots, baseRx: cfg.rx, baseRy: cfg.ry };
-            scene.add(grp);
-            return grp;
+        const emojiSprites = emojiCfg.map(d => {
+            const tex = makeEmoji(d.emoji, d.col);
+            const sp  = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: 0.92 }));
+            sp.scale.setScalar(d.sc * 1.55);
+            sp.position.set(d.x, d.y, d.z);
+            sp.userData = { ...d, baseX: d.x, baseY: d.y };
+            world.add(sp);
+            return sp;
         });
 
         /* ── STAR FIELD ──────────────────────────────────── */
-        const STARS = 500;
+        const STARS = 350;
         const sg = new THREE.BufferGeometry();
-        const sp = new Float32Array(STARS * 3);
+        const sp2 = new Float32Array(STARS * 3);
         for (let i = 0; i < STARS; i++) {
-            sp[i*3]   = (Math.random() - 0.5) * 90;
-            sp[i*3+1] = (Math.random() - 0.5) * 70;
-            sp[i*3+2] = (Math.random() - 0.5) * 50 - 10;
+            sp2[i*3]   = (Math.random() - 0.5) * 80;
+            sp2[i*3+1] = (Math.random() - 0.5) * 60;
+            sp2[i*3+2] = (Math.random() - 0.5) * 40 - 15;
         }
-        sg.setAttribute('position', new THREE.BufferAttribute(sp, 3));
+        sg.setAttribute('position', new THREE.BufferAttribute(sp2, 3));
         scene.add(new THREE.Points(sg, new THREE.PointsMaterial({
-            color: 0xffffff, size: 0.07, transparent: true, opacity: 0.55,
+            color: 0xffffff, size: 0.06, transparent: true, opacity: 0.4,
             blending: ADD, depthWrite: false,
         })));
 
@@ -650,30 +763,36 @@
             smooth.x += (mouse.x - smooth.x) * 0.05;
             smooth.y += (mouse.y - smooth.y) * 0.05;
 
-            // Wireframe rotates slowly
-            wireSphere.rotation.y = t * 0.18;
-            wireSphere.rotation.x = t * 0.09;
+            // World tilts with cursor
+            world.rotation.y = smooth.x * 0.14;
+            world.rotation.x = -smooth.y * 0.09;
 
-            // Rings orbit + tilt with mouse
-            ringGroups.forEach((grp, gi) => {
-                const { cfg, dots, baseRx, baseRy } = grp.userData;
-                grp.rotation.z += cfg.spd * 0.008;
-                grp.rotation.x  = baseRx + smooth.y * (0.18 + gi * 0.04);
-                grp.rotation.y  = baseRy + smooth.x * (0.18 + gi * 0.04);
+            // Person subtle breathing / idle sway
+            person.position.y = -0.3 + Math.sin(t * 0.9) * 0.06;
+            person.rotation.y = smooth.x * 0.08;
 
-                dots.forEach(dot => {
-                    const angle = t * cfg.spd * 0.9 + dot.userData.phase;
-                    dot.position.set(
-                        Math.cos(angle) * cfg.radius,
-                        Math.sin(angle) * cfg.radius,
-                        0
-                    );
-                });
+            // Thought bubble dots pulse
+            thoughtDots.forEach(dot => {
+                dot.material.opacity = 0.3 + Math.abs(Math.sin(t * 1.8 + dot.userData.i * 0.9)) * 0.65;
+                dot.scale.setScalar(0.85 + Math.abs(Math.sin(t * 1.8 + dot.userData.i * 0.9)) * 0.3);
             });
 
-            // Camera gentle parallax with cursor
-            camera.position.x += (2.5 + smooth.x * 1.8 - camera.position.x) * 0.04;
-            camera.position.y += (smooth.y * 1.2 - camera.position.y) * 0.04;
+            // Emojis float, bob, and slowly drift
+            emojiSprites.forEach((sp, i) => {
+                const d = sp.userData;
+                const ph = i * 1.1;
+                sp.position.y = d.baseY + Math.sin(t * d.spd + ph) * 0.40;
+                sp.position.x = d.baseX + Math.cos(t * d.spd * 0.45 + ph) * 0.15;
+                sp.material.opacity = 0.75 + Math.sin(t * 0.6 + ph) * 0.18;
+            });
+
+            // Lights pulse slightly
+            cyanLight.intensity   = 2.5 + Math.sin(t * 1.1) * 0.5;
+            violetLight.intensity = 1.8 + Math.sin(t * 0.7 + 1.2) * 0.4;
+
+            // Camera parallax
+            camera.position.x += (2.5 + smooth.x * 1.6 - camera.position.x) * 0.04;
+            camera.position.y += (smooth.y * 1.1 - camera.position.y) * 0.04;
             camera.lookAt(2.5, 0, 0);
 
             renderer.render(scene, camera);
