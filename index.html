@@ -124,19 +124,19 @@
     <!-- LIVE STATUS TICKER -->
     <div class="ticker-wrap">
         <div class="ticker-track">
-            <span class="ticker-item"><span class="text-emerald-400">â—</span> PARSING ENGINE <span class="text-emerald-400 font-semibold">ONLINE</span></span>
+            <span class="ticker-item"><span class="text-emerald-400">⚡</span> PARSING ENGINE <span class="text-emerald-400 font-semibold">ONLINE</span></span>
             <span class="ticker-item">CAS FORMATS <span class="text-slate-300 font-semibold">CAMS · KFINTECH</span></span>
             <span class="ticker-item">STOCKS MAPPED <span class="text-cyan-300 font-semibold">12,000+</span></span>
             <span class="ticker-item">FUNDS INDEXED <span class="text-cyan-300 font-semibold">4,800+</span></span>
-            <span class="ticker-item">AVG OVERLAP FOUND <span class="text-rose-400 font-semibold">â–² 18.4%</span></span>
+            <span class="ticker-item">AVG OVERLAP FOUND <span class="text-rose-400 font-semibold">▲ 18.4%</span></span>
             <span class="ticker-item">INTL FUNDS <span class="text-violet-300 font-semibold">EXCLUDED</span></span>
             <span class="ticker-item">ENCRYPTION <span class="text-violet-300 font-semibold">AES-256</span></span>
             <span class="ticker-item">DATA RETENTION <span class="text-emerald-400 font-semibold">ZERO</span></span>
-            <span class="ticker-item"><span class="text-emerald-400">â—</span> PARSING ENGINE <span class="text-emerald-400 font-semibold">ONLINE</span></span>
+            <span class="ticker-item"><span class="text-emerald-400">⚡</span> PARSING ENGINE <span class="text-emerald-400 font-semibold">ONLINE</span></span>
             <span class="ticker-item">CAS FORMATS <span class="text-slate-300 font-semibold">CAMS · KFINTECH</span></span>
             <span class="ticker-item">STOCKS MAPPED <span class="text-cyan-300 font-semibold">12,000+</span></span>
             <span class="ticker-item">FUNDS INDEXED <span class="text-cyan-300 font-semibold">4,800+</span></span>
-            <span class="ticker-item">AVG OVERLAP FOUND <span class="text-rose-400 font-semibold">â–² 18.4%</span></span>
+            <span class="ticker-item">AVG OVERLAP FOUND <span class="text-rose-400 font-semibold">▲ 18.4%</span></span>
             <span class="ticker-item">INTL FUNDS <span class="text-violet-300 font-semibold">EXCLUDED</span></span>
             <span class="ticker-item">ENCRYPTION <span class="text-violet-300 font-semibold">AES-256</span></span>
             <span class="ticker-item">DATA RETENTION <span class="text-emerald-400 font-semibold">ZERO</span></span>
@@ -170,10 +170,10 @@
 
             <span class="float-glyph" style="left:6%; font-size:1.05rem; animation-duration:13s; animation-delay:0s;">₹</span>
             <span class="float-glyph" style="left:18%; font-size:0.85rem; animation-duration:16s; animation-delay:3s;">%</span>
-            <span class="float-glyph text-emerald-400" style="left:30%; font-size:0.9rem; animation-duration:11s; animation-delay:1.5s;">â–²</span>
-            <span class="float-glyph text-rose-400" style="left:68%; font-size:0.85rem; animation-duration:14s; animation-delay:5s;">â–¼</span>
+            <span class="float-glyph text-emerald-400" style="left:30%; font-size:0.9rem; animation-duration:11s; animation-delay:1.5s;">▲</span>
+            <span class="float-glyph text-rose-400" style="left:68%; font-size:0.85rem; animation-duration:14s; animation-delay:5s;">▼</span>
             <span class="float-glyph" style="left:80%; font-size:0.8rem; animation-duration:15s; animation-delay:2s;">NAV</span>
-            <span class="float-glyph" style="left:92%; font-size:0.95rem; animation-duration:12s; animation-delay:4s;">âˆ‘</span>
+            <span class="float-glyph" style="left:92%; font-size:0.95rem; animation-duration:12s; animation-delay:4s;">∑</span>
 
             <div class="relative z-10">
                 <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass mb-6 text-xs font-mono text-cyan-300 tracking-wider uppercase">
@@ -393,7 +393,7 @@
         let currentSessionId = null;
         let currentTotalValue = 0;
 
-        // â”€â”€ Animated counter â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // —— Animated counter ——————————————————————————————————————————
         function animateValue(el, endValue, opts) {
             opts = opts || {};
             const prefix = opts.prefix || '', suffix = opts.suffix || '';
@@ -411,7 +411,7 @@
             requestAnimationFrame(tick);
         }
 
-        // â”€â”€ Render full report (after payment verified) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // —— Render full report (after payment verified) ———————————————
         function renderReport(data) {
             const totalValue = data.total_portfolio_value;
             const advice = data.ai_advice || {};
@@ -508,7 +508,7 @@
             ).join('');
         }
 
-        // â”€â”€ STEP 1: Upload CAS (free parse) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // —— STEP 1: Upload CAS (free parse) ——————————————————————————
         document.getElementById('uploadForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
@@ -551,7 +551,7 @@
             }
         });
 
-        // â”€â”€ STEP 2: Create Razorpay order â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // —— STEP 2: Create Razorpay order ————————————————————————————
         async function startPayment() {
             if (!currentSessionId) return;
             const btn = document.getElementById('unlockBtn');
@@ -566,7 +566,7 @@
 
                 if (order.status === 'error') { alert('Order error: ' + order.message); return; }
 
-                // â”€â”€ STEP 3: Open Razorpay checkout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // —— STEP 3: Open Razorpay checkout ———————————————————
                 const rzp = new Razorpay({
                     key: order.key_id,
                     amount: order.amount,
@@ -595,7 +595,7 @@
             }
         }
 
-        // â”€â”€ STEP 4: Verify payment & fetch full report â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // —— STEP 4: Verify payment & fetch full report ————————————————
         async function verifyAndUnlock(rzpResponse, orderId) {
             const btn = document.getElementById('unlockBtn');
             btn.innerHTML = `${SPINNER}&nbsp; Verifying payment & building report...`;
