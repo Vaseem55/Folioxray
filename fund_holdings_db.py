@@ -243,7 +243,6 @@ FUND_HOLDINGS = {
     ],
     "quant small cap fund": [
         {"stock_name": "Reliance Industries", "weight_percent": 5.2},
-        {"stock_name": "HDFC Bank", "weight_percent": 4.1},
         {"stock_name": "IRB Infrastructure Developers", "weight_percent": 3.8},
         {"stock_name": "Waaree Energies", "weight_percent": 3.5},
         {"stock_name": "Jio Financial Services", "weight_percent": 3.2},
@@ -257,6 +256,7 @@ FUND_HOLDINGS = {
         {"stock_name": "Manappuram Finance", "weight_percent": 1.7},
         {"stock_name": "Tata Teleservices", "weight_percent": 1.5},
         {"stock_name": "Trident", "weight_percent": 1.4},
+        {"stock_name": "Strides Pharma", "weight_percent": 1.3},
     ],
     "hdfc mid-cap opportunities fund": [
         {"stock_name": "Cholamandalam Investment", "weight_percent": 3.8},
