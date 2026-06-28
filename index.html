@@ -522,17 +522,22 @@
             align-items: center;
             justify-content: center;
         }
-        .person-svg {
-            width: 280px;
-            max-height: 420px;
-            animation: personBreathe 4s ease-in-out infinite;
-            filter: drop-shadow(0 0 28px rgba(34,211,238,0.22));
+        .person-photo {
+            width: 310px;
+            height: 460px;
+            object-fit: cover;
+            object-position: top center;
+            border-radius: 24px 24px 0 0;
             position: relative;
             z-index: 2;
+            animation: personBreathe 5s ease-in-out infinite;
+            -webkit-mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
+            mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
+            filter: brightness(0.88) contrast(1.08) saturate(0.9);
         }
         @keyframes personBreathe {
-            0%, 100% { transform: translateY(0px); }
-            50%       { transform: translateY(-8px); }
+            0%, 100% { transform: translateY(0px) scale(1); }
+            50%       { transform: translateY(-7px) scale(1.005); }
         }
 
         /* ── EMOJI BUBBLES ──────────────────────────────── */
@@ -689,144 +694,13 @@
                 <div class="emoji-bubble"        style="top:80%;left:62%; --dur:3.1s; --delay:0.9s; width:46px;height:46px;font-size:1.2rem;">✨</div>
                 <div class="emoji-bubble"        style="top:22%;left:80%; --dur:3.6s; --delay:1.8s; width:48px;height:48px;font-size:1.25rem;">🔍</div>
 
-                <!-- SVG Person — flat illustration, thinking pose -->
-                <svg class="person-svg" viewBox="0 0 260 420" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <defs>
-                        <radialGradient id="bgGlow" cx="50%" cy="60%" r="50%">
-                            <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.12"/>
-                            <stop offset="100%" stop-color="#22d3ee" stop-opacity="0"/>
-                        </radialGradient>
-                        <radialGradient id="faceShade" cx="40%" cy="35%" r="60%">
-                            <stop offset="0%" stop-color="#f0c090"/>
-                            <stop offset="100%" stop-color="#c98a55"/>
-                        </radialGradient>
-                        <linearGradient id="suitGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stop-color="#1a3a5f"/>
-                            <stop offset="100%" stop-color="#0d1f35"/>
-                        </linearGradient>
-                        <filter id="softGlow">
-                            <feGaussianBlur stdDeviation="3" result="blur"/>
-                            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-                        </filter>
-                    </defs>
-
-                    <!-- Ambient body glow -->
-                    <ellipse cx="130" cy="280" rx="110" ry="150" fill="url(#bgGlow)"/>
-
-                    <!-- Shadow on ground -->
-                    <ellipse cx="130" cy="415" rx="60" ry="8" fill="#22d3ee" opacity="0.08"/>
-
-                    <!-- LEGS -->
-                    <rect x="94"  y="310" width="34" height="100" rx="14" fill="#0d1b2e"/>
-                    <rect x="132" y="310" width="34" height="100" rx="14" fill="#0d1b2e"/>
-
-                    <!-- SHOES -->
-                    <ellipse cx="111" cy="408" rx="28" ry="10" fill="#07111f"/>
-                    <ellipse cx="149" cy="408" rx="28" ry="10" fill="#07111f"/>
-
-                    <!-- BODY / SUIT -->
-                    <path d="M72 195 C60 220 58 280 62 315 L198 315 C202 280 200 220 188 195 C175 180 155 172 130 172 C105 172 85 180 72 195Z" fill="url(#suitGrad)"/>
-
-                    <!-- SHIRT / COLLAR inner -->
-                    <path d="M118 172 L130 195 L142 172 C138 170 133 168 130 168 C127 168 122 170 118 172Z" fill="#e8f4f8"/>
-
-                    <!-- SUIT lapels -->
-                    <path d="M118 172 L88 210 L115 205 L130 195Z" fill="#122840"/>
-                    <path d="M142 172 L172 210 L145 205 L130 195Z" fill="#122840"/>
-
-                    <!-- TIE -->
-                    <path d="M126 195 L134 195 L137 255 L130 265 L123 255Z" fill="#22d3ee" opacity="0.75"/>
-                    <path d="M128 194 L132 194 L133 210 L130 213 L127 210Z" fill="#17a8c0" opacity="0.9"/>
-
-                    <!-- Pocket square -->
-                    <path d="M172 215 L183 210 L186 222 L175 224Z" fill="#22d3ee" opacity="0.6"/>
-
-                    <!-- Belt -->
-                    <rect x="82" y="307" width="96" height="10" rx="5" fill="#0a1525"/>
-                    <rect x="124" y="306" width="12" height="12" rx="2" fill="#22d3ee" opacity="0.45"/>
-
-                    <!-- LEFT ARM (relaxed, slightly bent) -->
-                    <path d="M72 198 C55 215 48 245 50 270 C52 285 58 292 64 295" stroke="#0d1b2e" stroke-width="26" stroke-linecap="round" fill="none"/>
-                    <!-- Left sleeve cuff -->
-                    <rect x="52" y="284" width="22" height="14" rx="7" fill="#1a3a5f"/>
-                    <!-- Left hand -->
-                    <ellipse cx="63" cy="302" rx="14" ry="12" fill="url(#faceShade)"/>
-                    <!-- Fingers suggestion -->
-                    <path d="M54 298 Q63 293 72 298" stroke="#c07040" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-
-                    <!-- RIGHT ARM RAISED — thinking pose -->
-                    <!-- Upper arm going up-right -->
-                    <path d="M188 198 C205 188 215 175 212 158 C209 142 196 136 185 142 C176 147 172 162 176 182" stroke="#0d1b2e" stroke-width="26" stroke-linecap="round" fill="none"/>
-                    <!-- Forearm coming back toward chin -->
-                    <path d="M176 182 C170 172 162 162 150 157" stroke="#0d1b2e" stroke-width="24" stroke-linecap="round" fill="none"/>
-                    <!-- Right sleeve cuff -->
-                    <rect x="142" y="148" width="22" height="14" rx="7" fill="#1a3a5f"/>
-                    <!-- Right hand at chin -->
-                    <ellipse cx="148" cy="148" rx="15" ry="13" fill="url(#faceShade)"/>
-                    <!-- Knuckle line -->
-                    <path d="M138 144 Q148 140 158 144" stroke="#c07040" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-
-                    <!-- NECK -->
-                    <rect x="118" y="142" width="24" height="32" rx="10" fill="url(#faceShade)"/>
-
-                    <!-- HEAD -->
-                    <!-- Hair back -->
-                    <ellipse cx="130" cy="92" rx="54" ry="58" fill="#1a2535"/>
-                    <!-- Hair top shape -->
-                    <path d="M76 88 Q78 34 130 30 Q182 34 184 88" fill="#1a2535"/>
-                    <!-- Side burns -->
-                    <path d="M76 88 Q70 108 74 128 Q78 116 84 110Z" fill="#1a2535"/>
-                    <path d="M184 88 Q190 108 186 128 Q182 116 176 110Z" fill="#1a2535"/>
-
-                    <!-- Face -->
-                    <ellipse cx="130" cy="104" rx="50" ry="54" fill="url(#faceShade)"/>
-
-                    <!-- Ear left -->
-                    <ellipse cx="79" cy="106" rx="9" ry="13" fill="#c98a55"/>
-                    <ellipse cx="80" cy="106" rx="5" ry="9" fill="#b07040" opacity="0.5"/>
-                    <!-- Ear right -->
-                    <ellipse cx="181" cy="106" rx="9" ry="13" fill="#c98a55"/>
-                    <ellipse cx="180" cy="106" rx="5" ry="9" fill="#b07040" opacity="0.5"/>
-
-                    <!-- Eyebrows — left raised (thinking) -->
-                    <path d="M100 86 Q112 80 122 84" stroke="#5a3a20" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-                    <!-- Right brow — normal -->
-                    <path d="M138 83 Q150 81 162 85" stroke="#5a3a20" stroke-width="3" fill="none" stroke-linecap="round"/>
-
-                    <!-- Eyes -->
-                    <!-- Left eye -->
-                    <ellipse cx="111" cy="96" rx="12" ry="10" fill="white"/>
-                    <circle cx="113" cy="97" r="7" fill="#2d3a4a"/>
-                    <circle cx="113" cy="97" r="4" fill="#1a252f"/>
-                    <circle cx="115" cy="95" r="2" fill="white"/>
-                    <!-- Right eye looking up-left (thinking gaze) -->
-                    <ellipse cx="149" cy="95" rx="12" ry="10" fill="white"/>
-                    <circle cx="147" cy="94" r="7" fill="#2d3a4a"/>
-                    <circle cx="147" cy="94" r="4" fill="#1a252f"/>
-                    <circle cx="149" cy="92" r="2" fill="white"/>
-
-                    <!-- Eyelashes -->
-                    <path d="M99 92 Q100 88 101 86" stroke="#2d1a0a" stroke-width="1.5" stroke-linecap="round" fill="none"/>
-                    <path d="M111 86 Q111 82 112 80" stroke="#2d1a0a" stroke-width="1.5" stroke-linecap="round" fill="none"/>
-                    <path d="M123 88 Q125 85 127 84" stroke="#2d1a0a" stroke-width="1.5" stroke-linecap="round" fill="none"/>
-
-                    <!-- Nose -->
-                    <path d="M127 108 Q130 120 133 108" stroke="#b07040" stroke-width="2" fill="none" stroke-linecap="round"/>
-                    <path d="M122 122 Q130 126 138 122" stroke="#b07040" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-
-                    <!-- Mouth — slight thinking expression -->
-                    <path d="M114 133 Q124 139 130 138 Q136 137 142 133" stroke="#9a5a30" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-
-                    <!-- Chin dimple -->
-                    <path d="M128 145 Q130 148 132 145" stroke="#b07040" stroke-width="1.2" fill="none" stroke-linecap="round"/>
-
-                    <!-- Glow accent on jacket -->
-                    <path d="M130 185 L130 265" stroke="#22d3ee" stroke-width="1" opacity="0.2" stroke-dasharray="4 6"/>
-
-                    <!-- Cyan eye glow filter hint -->
-                    <circle cx="113" cy="97" r="4.5" fill="#22d3ee" opacity="0.08"/>
-                    <circle cx="147" cy="94" r="4.5" fill="#22d3ee" opacity="0.08"/>
-                </svg>
+                <!-- Real person photo -->
+                <img
+                    class="person-photo"
+                    src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=620&h=920&fit=crop&crop=top&q=85"
+                    alt="Person thinking about mutual fund portfolio"
+                    onerror="this.src='https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=620&h=920&fit=crop&crop=top&q=85'"
+                />
 
             </div>
         </div>
