@@ -452,17 +452,21 @@ async def debug_mftool():
             if not codes:
                 return {"error": "get_scheme_codes returned empty"}
             # Find Axis Bluechip Direct
-            matches = {k: v for k, v in codes.items()
-                       if "axis" in v.lower() and ("bluechip" in v.lower() or "blue chip" in v.lower()) and "direct" in v.lower()}
-            if not matches:
-                # Show all Axis funds to see actual naming
-                axis_funds = {k: v for k, v in codes.items() if "axis" in v.lower() and "direct" in v.lower()}
-                return {"error": "No Axis Bluechip Direct found", "total_codes": len(codes),
-                        "axis_direct_funds": dict(list(axis_funds.items())[:10])}
-            code, name = next(iter(matches.items()))
-            portfolio = mf.get_scheme_portfolio(code)
-            return {"scheme_code": code, "scheme_name": name, "portfolio_keys": list(portfolio.keys()) if portfolio else None,
-                    "portfolio_sample": portfolio}
+            # Show ALL axis direct equity/growth funds
+            axis_funds = {k: v for k, v in codes.items()
+                          if "axis" in v.lower() and "direct" in v.lower()
+                          and ("growth" in v.lower() or "gr" in v.lower())}
+            # Also test portfolio retrieval with a known large cap fund code
+            test_code = "120503"  # Likely Axis Bluechip Direct Growth
+            test_portfolio = mf.get_scheme_portfolio(test_code)
+            return {
+                "all_axis_direct_growth_funds": axis_funds,
+                "portfolio_test_code_120503": {
+                    "keys": list(test_portfolio.keys()) if test_portfolio else None,
+                    "portfolios_count": len(test_portfolio.get("portfolios", [])) if test_portfolio else 0,
+                    "first_holding": test_portfolio.get("portfolios", [None])[0] if test_portfolio else None,
+                }
+            }
         except Exception as e:
             return {"error": str(e), "type": type(e).__name__}
 
