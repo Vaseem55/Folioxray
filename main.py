@@ -459,18 +459,29 @@ def is_international_fund(name: str) -> bool:
 
 @app.get("/debug-amfi")
 async def debug_amfi():
-    """Test AMFI portfolio file download."""
+    """Test various AMFI portfolio URLs to find the working one."""
     from datetime import datetime, timedelta
     async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as http_client:
         now = datetime.now()
         results = {}
+        urls_to_try = []
+        # Different URL formats AMFI has used over the years
         for delta in [0, 1, 2]:
             d = now.replace(day=1) - timedelta(days=delta * 30)
             mmyy = d.strftime("%m%y")
-            url = f"https://www.amfiindia.com/spages/aportfolio{mmyy}.txt"
+            mmmyyyy = d.strftime("%b%Y")  # e.g. Jun2026
+            yyyy_mm = d.strftime("%Y%m")
+            urls_to_try += [
+                f"https://www.amfiindia.com/spages/aportfolio{mmyy}.txt",
+                f"https://www.amfiindia.com/spages/aportfolio{mmmyyyy}.txt",
+                f"https://www.amfiindia.com/modules/DownloadMonthlyPortfolio?mPortfolioType=BS&distributor=AMFI&mPortfolioDate={d.strftime('%d-%b-%Y')}",
+            ]
+        # Also try the main portfolio page to find the actual link
+        urls_to_try.append("https://www.amfiindia.com/research-information/other-data/scheme-portfolio")
+        for url in urls_to_try[:6]:
             try:
-                r = await http_client.get(url, timeout=20.0)
-                results[url] = {"status": r.status_code, "size": len(r.text), "first_300": r.text[:300]}
+                r = await http_client.get(url, timeout=15.0)
+                results[url] = {"status": r.status_code, "size": len(r.text), "first_200": r.text[:200]}
             except Exception as e:
                 results[url] = {"error": str(e)}
     return JSONResponse(content=results)
