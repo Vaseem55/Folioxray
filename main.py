@@ -32,8 +32,23 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID")
 RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET")
 
-client = AsyncOpenAI(api_key=OPENAI_API_KEY)
-rzp = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
+# Defer client initialization so missing env vars don't crash at import time
+_openai_client = None
+_rzp_client = None
+
+def get_openai_client():
+    global _openai_client
+    if _openai_client is None:
+        if not OPENAI_API_KEY:
+            raise RuntimeError("OPENAI_API_KEY environment variable is not set")
+        _openai_client = AsyncOpenAI(api_key=OPENAI_API_KEY)
+    return _openai_client
+
+def get_rzp_client():
+    global _rzp_client
+    if _rzp_client is None:
+        _rzp_client = razorpay.Client(auth=(RAZORPAY_KEY_ID or "", RAZORPAY_KEY_SECRET or ""))
+    return _rzp_client
 
 REPORT_PRICE_PAISE = 9900   # ₹99 in paise
 
@@ -197,24 +212,23 @@ async def fetch_from_vro(fund_name: str, http_client: httpx.AsyncClient) -> list
 
 
 async def fetch_live_market_holdings(fund_name: str) -> list:
-    if fund_name in FUND_HOLDINGS_CACHE:
-        return FUND_HOLDINGS_CACHE[fund_name]
-
     # Skip non-equity funds — they have no stock holdings to compare
     if is_non_equity_fund(fund_name) or is_international_fund(fund_name):
         print(f"Skipping non-equity/international: '{fund_name}'")
-        FUND_HOLDINGS_CACHE[fund_name] = []
         return []
 
-    # Static DB lookup — fast, no network needed
+    # DB lookup always takes priority — never serve a stale empty cache entry
     holdings, matched = lookup_fund_holdings(fund_name)
     if holdings:
         print(f"DB: '{fund_name}' -> '{matched}' ({len(holdings)} holdings)")
         FUND_HOLDINGS_CACHE[fund_name] = holdings
         return holdings
 
+    # Only use cache for non-DB funds (avoids hammering live APIs for same fund)
+    if fund_name in FUND_HOLDINGS_CACHE and FUND_HOLDINGS_CACHE[fund_name]:
+        return FUND_HOLDINGS_CACHE[fund_name]
+
     print(f"Not in DB: '{fund_name}' — returning empty")
-    FUND_HOLDINGS_CACHE[fund_name] = []
     return []
 
 
@@ -242,7 +256,7 @@ async def analyze_portfolio_categories(portfolio_data: list) -> dict:
     }}
     """
     try:
-        response = await client.chat.completions.create(
+        response = await get_openai_client().chat.completions.create(
             model="gpt-4o-mini",
             response_format={"type": "json_object"},
             messages=[
@@ -297,6 +311,12 @@ async def build_full_report(domestic_portfolio: list) -> dict:
                 break
 
         mapped_overlapping_funds.append({"scheme_name": exact_name, "current_value_inr": matched_value})
+
+    # Build stock weightage detail from ALL funds that have holdings (not just AI-flagged ones)
+    # so the "common stock weightages" section matches what pair_overlaps actually finds
+    for real_fund in domestic_portfolio:
+        exact_name = real_fund["scheme_name"]
+        matched_value = real_fund["current_value_inr"]
         live_holdings = fund_holdings_map.get(exact_name, [])
 
         for holding in live_holdings:
@@ -319,6 +339,7 @@ async def build_full_report(domestic_portfolio: list) -> dict:
         data for data in overlapping_stocks_master.values()
         if len(data["allocations"]) > 1
     ]
+    final_overlapping_stocks.sort(key=lambda x: sum(a["weight"] for a in x["allocations"]), reverse=True)
 
     # Only compare funds that have actual equity holdings
     fund_names_list = [name for name, h in fund_holdings_map.items() if len(h) > 0]
@@ -592,7 +613,7 @@ async def create_order(session_id: str = Form(...)):
         return JSONResponse(status_code=404, content={"status": "error", "message": "Session expired. Please re-upload your CAS."})
 
     try:
-        order = rzp.order.create({
+        order = get_rzp_client().order.create({
             "amount": REPORT_PRICE_PAISE,
             "currency": "INR",
             "receipt": f"folioxray_{session_id[:8]}",
