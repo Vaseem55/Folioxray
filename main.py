@@ -473,7 +473,7 @@ async def debug_amfi():
                     if isinstance(body, list):
                         results[name] = {"status": r.status_code, "type": "array", "count": len(body), "first_item": body[0] if body else None}
                     else:
-                        results[name] = {"status": r.status_code, "type": "object", "keys": list(body.keys()) if isinstance(body, dict) else str(body)[:200]}
+                        results[name] = {"status": r.status_code, "full_body": body}
                 except:
                     results[name] = {"status": r.status_code, "content_type": ct, "size": len(r.text), "first_300": r.text[:300]}
             except Exception as e:
