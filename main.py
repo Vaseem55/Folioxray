@@ -73,78 +73,97 @@ FUND_HOLDINGS_CACHE = load_cache()
 # HOLDINGS FETCHERS
 # =====================================================================
 
-async def fetch_holdings_from_amfi(fund_name: str, http_client: httpx.AsyncClient) -> list:
-    """Fetch real holdings using mftool (pulls from AMFI monthly disclosures)."""
-    import re
-    from concurrent.futures import ThreadPoolExecutor
-    import asyncio
+AMFI_PORTFOLIO_CACHE = {}  # {date_str: raw_text}
 
-    def _sync_fetch(name):
+async def get_amfi_portfolio_file(http_client: httpx.AsyncClient) -> str:
+    """Download AMFI monthly portfolio disclosure file (cached per day)."""
+    from datetime import date
+    today = date.today().strftime("%Y-%m")
+    if today in AMFI_PORTFOLIO_CACHE:
+        return AMFI_PORTFOLIO_CACHE[today]
+    # Try current and previous month
+    from datetime import datetime, timedelta
+    now = datetime.now()
+    for delta in [0, 1, 2]:
+        d = now.replace(day=1) - timedelta(days=delta * 30)
+        mmyy = d.strftime("%m%y")
+        url = f"https://www.amfiindia.com/spages/aportfolio{mmyy}.txt"
         try:
-            from mftool import Mftool
-            from difflib import SequenceMatcher
-            mf = Mftool()
-            all_schemes = mf.get_scheme_codes()
-            if not all_schemes:
-                return []
-
-            # Remove the header row if present
-            schemes = {k: v for k, v in all_schemes.items() if k != "Scheme Code"}
-
-            # Only consider Direct Growth variants to reduce noise
-            name_lower = name.lower().replace("-", " ").replace("  ", " ")
-            direct_schemes = {k: v for k, v in schemes.items()
-                              if "direct" in v.lower() and
-                              ("growth" in v.lower() or "gr" in v.lower())}
-
-            # Score each scheme by similarity
-            best_code = None
-            best_score = 0.0
-            for code, scheme_name in direct_schemes.items():
-                sname = scheme_name.lower().replace("-", " ").replace("  ", " ")
-                score = SequenceMatcher(None, name_lower, sname).ratio()
-                if score > best_score:
-                    best_score = score
-                    best_code = code
-                    best_name = scheme_name
-
-            print(f"  mftool best match: '{best_name}' (score {best_score:.2f}) for '{name}'")
-            if best_score < 0.45:
-                print(f"  mftool: score too low, skipping")
-                return []
-
-            portfolio = mf.get_scheme_portfolio(best_code)
-            if not portfolio or "portfolios" not in portfolio:
-                print(f"  mftool: no portfolios key in response: {list(portfolio.keys()) if portfolio else None}")
-                return []
-
-            cleaned = []
-            for h in portfolio["portfolios"]:
-                stock = (h.get("nameOfInstrument") or "").strip()
-                weight = h.get("percentageToNav") or 0
-                stock = re.sub(r'[^\w\s\.\-\(\)&,/]', '', stock, flags=re.ASCII).strip()
-                try:
-                    weight = float(str(weight).replace(",", ""))
-                except:
-                    weight = 0.0
-                # Skip debt/cash instruments (they have a rating field set)
-                if h.get("rating") and h["rating"].strip():
-                    continue
-                if stock and weight > 0:
-                    cleaned.append({"stock_name": stock, "weight_percent": weight})
-
-            cleaned.sort(key=lambda x: x["weight_percent"], reverse=True)
-            print(f"  ✅ mftool: {len(cleaned)} equity holdings for '{name}'")
-            return cleaned[:15]
+            print(f"  Trying AMFI file: {url}")
+            r = await http_client.get(url, timeout=30.0)
+            if r.status_code == 200 and len(r.text) > 10000:
+                print(f"  ✅ Got AMFI file ({len(r.text)} chars)")
+                AMFI_PORTFOLIO_CACHE[today] = r.text
+                return r.text
         except Exception as e:
-            import traceback
-            print(f"  mftool error: {traceback.format_exc()}")
+            print(f"  AMFI file error: {e}")
+    return ""
+
+
+async def fetch_holdings_from_amfi(fund_name: str, http_client: httpx.AsyncClient) -> list:
+    """Fetch real holdings from AMFI monthly portfolio disclosure text file."""
+    import re
+
+    from difflib import SequenceMatcher
+    try:
+        raw = await get_amfi_portfolio_file(http_client)
+        if not raw:
             return []
 
-    loop = asyncio.get_event_loop()
-    with ThreadPoolExecutor() as pool:
-        result = await loop.run_in_executor(pool, _sync_fetch, fund_name)
-    return result
+        # Parse the AMFI portfolio text file
+        # Format: scheme header line, then holding lines with semicolons
+        lines = raw.splitlines()
+        name_lower = fund_name.lower().replace("-", " ").strip()
+
+        # Find best matching scheme section
+        best_score = 0.0
+        best_start = -1
+        for i, line in enumerate(lines):
+            line_clean = line.strip()
+            if not line_clean or ";" not in line_clean:
+                # Could be a scheme name header line
+                score = SequenceMatcher(None, name_lower, line_clean.lower()).ratio()
+                if score > best_score:
+                    best_score = score
+                    best_start = i
+
+        print(f"  AMFI best match score {best_score:.2f} at line {best_start}: '{lines[best_start] if best_start >= 0 else ''}'")
+        if best_score < 0.4 or best_start < 0:
+            return []
+
+        # Extract holdings from the section after the matched scheme name
+        cleaned = []
+        in_section = False
+        for line in lines[best_start:]:
+            parts = [p.strip() for p in line.split(";")]
+            if len(parts) >= 5:
+                in_section = True
+                name_col = parts[0]
+                # Last column is % to NAV
+                pct_col = parts[-1]
+                # Skip header rows and debt instruments (those have ratings in col 3 or 4)
+                rating_col = parts[3] if len(parts) > 3 else ""
+                if name_col.lower() in ("name of instrument", "name of the instrument", ""):
+                    continue
+                if rating_col and rating_col not in ("-", "NA", "N/A", "") and not rating_col.replace(".", "").replace(",", "").replace("-", "").isdigit():
+                    continue  # Has a credit rating — it's a debt instrument
+                try:
+                    weight = float(pct_col.replace(",", ""))
+                    if name_col and weight > 0:
+                        cleaned.append({"stock_name": name_col, "weight_percent": weight})
+                except:
+                    pass
+            elif in_section and len(parts) < 3 and line.strip():
+                # Reached next scheme section
+                break
+
+        cleaned.sort(key=lambda x: x["weight_percent"], reverse=True)
+        print(f"  ✅ AMFI file: {len(cleaned)} equity holdings for '{fund_name}'")
+        return cleaned[:15]
+    except Exception as e:
+        import traceback
+        print(f"  AMFI parse error: {traceback.format_exc()}")
+        return []
 
 
 async def fetch_from_vro(fund_name: str, http_client: httpx.AsyncClient) -> list:
@@ -438,42 +457,23 @@ def is_international_fund(name: str) -> bool:
 # ENDPOINTS
 # =====================================================================
 
-@app.get("/debug-mftool")
-async def debug_mftool():
-    """Check if mftool works and what it returns."""
-    import asyncio
-    from concurrent.futures import ThreadPoolExecutor
-
-    def _test():
-        try:
-            from mftool import Mftool
-            mf = Mftool()
-            codes = mf.get_scheme_codes()
-            if not codes:
-                return {"error": "get_scheme_codes returned empty"}
-            # Find Axis Bluechip Direct
-            # Show ALL axis direct equity/growth funds
-            axis_funds = {k: v for k, v in codes.items()
-                          if "axis" in v.lower() and "direct" in v.lower()
-                          and ("growth" in v.lower() or "gr" in v.lower())}
-            # Also test portfolio retrieval with a known large cap fund code
-            test_code = "120503"  # Likely Axis Bluechip Direct Growth
-            test_portfolio = mf.get_scheme_portfolio(test_code)
-            return {
-                "all_axis_direct_growth_funds": axis_funds,
-                "portfolio_test_code_120503": {
-                    "keys": list(test_portfolio.keys()) if test_portfolio else None,
-                    "portfolios_count": len(test_portfolio.get("portfolios", [])) if test_portfolio else 0,
-                    "first_holding": test_portfolio.get("portfolios", [None])[0] if test_portfolio else None,
-                }
-            }
-        except Exception as e:
-            return {"error": str(e), "type": type(e).__name__}
-
-    loop = asyncio.get_event_loop()
-    with ThreadPoolExecutor() as pool:
-        result = await loop.run_in_executor(pool, _test)
-    return JSONResponse(content=result)
+@app.get("/debug-amfi")
+async def debug_amfi():
+    """Test AMFI portfolio file download."""
+    from datetime import datetime, timedelta
+    async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as http_client:
+        now = datetime.now()
+        results = {}
+        for delta in [0, 1, 2]:
+            d = now.replace(day=1) - timedelta(days=delta * 30)
+            mmyy = d.strftime("%m%y")
+            url = f"https://www.amfiindia.com/spages/aportfolio{mmyy}.txt"
+            try:
+                r = await http_client.get(url, timeout=20.0)
+                results[url] = {"status": r.status_code, "size": len(r.text), "first_300": r.text[:300]}
+            except Exception as e:
+                results[url] = {"error": str(e)}
+    return JSONResponse(content=results)
 
 
 @app.get("/")
