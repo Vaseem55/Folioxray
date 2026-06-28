@@ -1170,7 +1170,6 @@ FUND_ALIASES = {
     "icici prudential large cap": "icici prudential bluechip fund",
     "icici pru large cap": "icici prudential bluechip fund",
     "hdfc large cap": "hdfc large cap fund",
-    "hdfc top 100": "hdfc large cap fund",
     "uti large cap": "uti large cap fund",
     "uti nifty 200": "uti large cap fund",
     "kotak large cap": "kotak large cap fund",
