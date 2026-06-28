@@ -451,43 +451,30 @@ def is_international_fund(name: str) -> bool:
 
 @app.get("/debug-amfi")
 async def debug_amfi():
-    """Test multiple MF data sources."""
-    ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    """Try all known AMFI portfolio URL patterns to find the working one."""
+    from datetime import datetime, timedelta
+    ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+    now = datetime.now()
+    tests = {}
+    for delta in [0, 1, 2]:
+        d = now.replace(day=1) - timedelta(days=delta * 30)
+        mm = d.strftime("%m")
+        yy = d.strftime("%y")
+        yyyy = d.strftime("%Y")
+        mon = d.strftime("%b")
+        tests[f"a_{mm}{yy}"]   = f"https://www.amfiindia.com/spages/aportfolio{mm}{yy}.txt"
+        tests[f"a_{mm}{yyyy}"] = f"https://www.amfiindia.com/spages/aportfolio{mm}{yyyy}.txt"
+        tests[f"n_{mm}{yyyy}"] = f"https://www.amfiindia.com/spages/NPortfolio{mm}{yyyy}.txt"
+        tests[f"a_{mon}{yyyy}"]= f"https://www.amfiindia.com/spages/aportfolio{mon}{yyyy}.txt"
+
     results = {}
-    async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as http_client:
-        # 1. Moneycontrol MF search
-        try:
-            r = await http_client.get(
-                "https://search.moneycontrol.com/solr/securities/select/?q=axis+bluechip+direct&fq=sc_type:MF&fl=sc_id,sc_name,sc_type&rows=5&wt=json",
-                headers={"User-Agent": ua}
-            )
-            results["mc_search"] = {"status": r.status_code, "body": r.json() if r.status_code == 200 else r.text[:300]}
-        except Exception as e:
-            results["mc_search"] = {"error": str(e)}
-
-        # 2. Value Research Online - fund portfolio page (known fund ID for Axis Bluechip Direct)
-        try:
-            r = await http_client.get(
-                "https://www.valueresearchonline.com/funds/15088/axis-bluechip-fund/?tab=portfolio",
-                headers={"User-Agent": ua, "Accept": "text/html", "Referer": "https://www.valueresearchonline.com/"}
-            )
-            import re as _re
-            # Look for holdings table data
-            tables = _re.findall(r'<table[^>]*>(.*?)</table>', r.text, _re.DOTALL | _re.IGNORECASE)
-            holdings_hint = r.text[r.text.lower().find('hdfc'):r.text.lower().find('hdfc')+200] if 'hdfc' in r.text.lower() else "not found"
-            results["vro"] = {"status": r.status_code, "size": len(r.text), "tables_found": len(tables), "hdfc_context": holdings_hint[:200]}
-        except Exception as e:
-            results["vro"] = {"error": str(e)}
-
-        # 3. mfapi full list (truncated) to confirm scheme codes work
-        try:
-            r = await http_client.get("https://api.mfapi.in/mf", headers={"User-Agent": ua})
-            data = r.json() if r.status_code == 200 else []
-            axis = [x for x in data if "axis" in x.get("schemeName","").lower() and "bluechip" in x.get("schemeName","").lower() and "direct" in x.get("schemeName","").lower()]
-            results["mfapi_list"] = {"status": r.status_code, "total_schemes": len(data), "axis_bluechip_direct": axis[:5]}
-        except Exception as e:
-            results["mfapi_list"] = {"error": str(e)}
-
+    async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as http_client:
+        for name, url in tests.items():
+            try:
+                r = await http_client.get(url, headers={"User-Agent": ua})
+                results[name] = {"url": url, "status": r.status_code, "size": len(r.text), "first_100": r.text[:100] if r.status_code == 200 else ""}
+            except Exception as e:
+                results[name] = {"url": url, "error": str(e)}
     return JSONResponse(content=results)
 
 
