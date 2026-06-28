@@ -32,44 +32,52 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 1.25rem 3rem;
+            padding: 1.1rem 3rem;
             border-bottom: 1px solid rgba(255,255,255,0.06);
-            background: rgba(5,5,8,0.85);
+            background: rgba(5,5,8,0.90);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
         }
         .nav-logo {
             font-family: 'Space Grotesk', sans-serif;
             font-weight: 800;
-            font-size: 1.25rem;
+            font-size: 1.2rem;
             color: #ffffff;
             letter-spacing: -0.02em;
         }
         .nav-logo span { color: #22d3ee; }
-        .nav-center {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.7rem;
-            color: #64748b;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 2.5rem;
         }
-        .nav-cta {
-            font-family: 'Space Grotesk', sans-serif;
-            font-weight: 700;
-            font-size: 0.82rem;
-            color: #22d3ee;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
+        .nav-link {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #94a3b8;
+            text-decoration: none;
             cursor: pointer;
-            border: 1px solid rgba(34,211,238,0.35);
-            padding: 0.5rem 1.2rem;
-            border-radius: 6px;
+            transition: color 0.2s;
+            letter-spacing: 0.01em;
+        }
+        .nav-link:hover { color: #ffffff; }
+        .nav-cta {
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: #050508;
+            cursor: pointer;
+            border: none;
+            padding: 0.6rem 1.5rem;
+            border-radius: 100px;
             transition: all 0.2s ease;
-            background: rgba(34,211,238,0.05);
+            background: #22d3ee;
+            white-space: nowrap;
         }
         .nav-cta:hover {
-            background: rgba(34,211,238,0.12);
-            border-color: rgba(34,211,238,0.6);
+            background: #ffffff;
+            transform: translateY(-1px);
         }
 
         /* ── HERO ───────────────────────────────────────── */
@@ -83,15 +91,15 @@
             width: 60%;
             display: flex;
             flex-direction: column;
-            justify-content: flex-end;
-            padding: 0 3rem 5rem 4rem;
+            justify-content: center;
+            padding: 0 3rem 8rem 4rem;
         }
         .hero-right {
             width: 40%;
             display: flex;
             flex-direction: column;
-            justify-content: flex-end;
-            padding: 0 3rem 5rem 0;
+            justify-content: center;
+            padding: 0 3rem 8rem 0;
             position: relative;
         }
         .hero-label {
@@ -114,14 +122,77 @@
         }
         .hero-h1 {
             font-family: 'Space Grotesk', sans-serif;
-            font-size: clamp(4rem, 9vw, 8.5rem);
-            font-weight: 800;
-            letter-spacing: -0.04em;
-            line-height: 0.9;
+            font-size: clamp(2.8rem, 5.5vw, 5rem);
+            letter-spacing: -0.03em;
+            line-height: 1.05;
             color: #ffffff;
-            margin-bottom: 2.5rem;
+            margin-bottom: 1.75rem;
         }
-        .hero-accent { color: #22d3ee; }
+        .hero-h1-light {
+            font-weight: 400;
+            display: block;
+            color: #cbd5e1;
+        }
+        .hero-h1-bold {
+            font-weight: 800;
+            display: block;
+        }
+        .hero-accent {
+            color: #22d3ee;
+            position: relative;
+            display: inline-block;
+        }
+        .hero-accent::after {
+            content: '';
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background: #22d3ee;
+            border-radius: 2px;
+            margin-left: 6px;
+            vertical-align: middle;
+            position: relative;
+            top: -3px;
+        }
+        /* ── WORKS WITH STRIP ───────────────────────────── */
+        .works-with-strip {
+            position: absolute;
+            bottom: 2.5rem;
+            left: 4rem;
+            right: 3rem;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        .works-with-label {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.72rem;
+            font-weight: 500;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+        .works-with-label::after {
+            content: '';
+            display: block;
+            width: 24px;
+            height: 1px;
+            background: rgba(255,255,255,0.12);
+        }
+        .works-badge {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 0.88rem;
+            color: rgba(255,255,255,0.5);
+            letter-spacing: 0.01em;
+            transition: color 0.2s;
+        }
+        .works-badge:hover { color: rgba(255,255,255,0.85); }
         .hero-desc {
             font-size: 1rem;
             line-height: 1.65;
@@ -612,52 +683,53 @@
     })();
     </script>
 
-    <!-- ── EDITORIAL NAV ─────────────────────────────── -->
+    <!-- ── NAV ──────────────────────────────────────── -->
     <nav class="editorial-nav">
         <div class="nav-logo">Folio<span>XRay</span></div>
-        <div class="nav-center">CAMS &nbsp;·&nbsp; KFintech &nbsp;·&nbsp; AES-256</div>
+        <div class="nav-links">
+            <a class="nav-link" onclick="document.getElementById('uploadPanel').classList.remove('hidden')">How It Works</a>
+            <a class="nav-link" onclick="document.getElementById('uploadPanel').classList.remove('hidden')">Features</a>
+            <a class="nav-link" href="mailto:vaseemakrams55@gmail.com">Contact</a>
+        </div>
         <button class="nav-cta" onclick="document.getElementById('uploadPanel').classList.remove('hidden')">
-            Analyse Now &nbsp;→
+            Upload CAS →
         </button>
     </nav>
 
     <!-- ── HERO SECTION ──────────────────────────────── -->
-    <section id="heroSection" class="hero-section">
+    <section id="heroSection" class="hero-section" style="position:relative;">
 
         <!-- LEFT 60% -->
         <div class="hero-left">
-            <div class="hero-label">AI · Mutual Fund Intelligence · India</div>
+            <div class="hero-label">AI-Powered &nbsp;·&nbsp; Mutual Fund Intelligence &nbsp;·&nbsp; India</div>
 
             <h1 class="hero-h1">
-                DECODE<br>
-                YOUR FUND<br>
-                <span class="hero-accent">OVERLAP.</span>
+                <span class="hero-h1-light">Stop Guessing About</span>
+                <span class="hero-h1-bold">Your Fund</span>
+                <span class="hero-h1-bold"><span class="hero-accent">Overlap.</span></span>
             </h1>
 
             <p class="hero-desc">
-                Upload your CAS. We surface every hidden stock overlap across your mutual funds — ranked, weighted, actionable.
+                Upload your CAS PDF and instantly uncover every hidden stock overlap across your mutual funds — ranked, weighted, and actionable.
             </p>
 
             <button class="hero-cta-btn" id="heroCtaBtn">
-                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-                </svg>
-                Upload CAS PDF →
+                Upload Your CAS PDF →
             </button>
 
             <div class="hero-pills">
                 <span class="hero-pill">Overlap Ranking</span>
-                <span class="hero-pill">Redundant Funds</span>
-                <span class="hero-pill">Stock Weights</span>
+                <span class="hero-pill">Redundant Fund Detection</span>
+                <span class="hero-pill">Stock Weightages</span>
                 <span class="hero-pill">AI Advice</span>
             </div>
         </div>
 
-        <!-- RIGHT 40% -->
+        <!-- RIGHT 40% — orb shines through -->
         <div class="hero-right">
             <div class="hero-feature-list">
                 <div class="hero-feature-item">
-                    Overlap Ranking <span class="arrow">→</span>
+                    Pairwise Overlap Analysis <span class="arrow">→</span>
                 </div>
                 <div class="hero-feature-item">
                     Redundant Fund Detection <span class="arrow">→</span>
@@ -669,7 +741,15 @@
                     AI Portfolio Suggestions <span class="arrow">→</span>
                 </div>
             </div>
-            <div class="hero-trust">CAMS · KFintech · 256-bit · Not Stored</div>
+        </div>
+
+        <!-- WORKS WITH STRIP (bottom, absolute) -->
+        <div class="works-with-strip">
+            <span class="works-with-label">Works with</span>
+            <span class="works-badge">CAMS</span>
+            <span class="works-badge">KFintech</span>
+            <span class="works-badge">AMFI</span>
+            <span class="works-badge" style="color:rgba(34,211,238,0.4);font-size:0.75rem;font-weight:500;">256-bit Encrypted &nbsp;·&nbsp; Zero Data Stored</span>
         </div>
 
     </section>
