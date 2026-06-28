@@ -450,20 +450,25 @@ def is_international_fund(name: str) -> bool:
 
 @app.get("/debug-amfi")
 async def debug_amfi():
-    """Test Tickertape MF holdings API."""
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        "Accept": "application/json",
-        "Referer": "https://www.tickertape.in/",
+    """Test multiple MF data sources."""
+    q = "Axis+Bluechip+Direct+Growth"
+    tests = {
+        "groww_search": f"https://groww.in/v1/api/search/v3/query/global/scheme?q={q}&page=0&size=3",
+        "kuvera": "https://api.kuvera.in/api/v4/fund_schemes.json?query=axis+bluechip+direct&per_page=3",
+        "tickertape": f"https://api.tickertape.in/search?q={q}&entities=mutualfund",
+        "mfapi_search": "https://api.mfapi.in/mf/search?q=axis+bluechip+direct",
     }
-    async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as http_client:
-        search_url = "https://api.tickertape.in/mf/search?query=Axis+Blue+Chip+Direct+Growth&count=3"
-        try:
-            r = await http_client.get(search_url, headers=headers)
-            search_result = {"status": r.status_code, "body": r.json() if r.status_code == 200 else r.text[:300]}
-        except Exception as e:
-            search_result = {"error": str(e)}
-    return JSONResponse(content={"tickertape_search": search_result})
+    headers = {"User-Agent": "Mozilla/5.0", "Accept": "application/json"}
+    results = {}
+    async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as http_client:
+        for name, url in tests.items():
+            try:
+                r = await http_client.get(url, headers=headers)
+                body = r.json() if "json" in r.headers.get("content-type", "") else r.text[:200]
+                results[name] = {"status": r.status_code, "body": body}
+            except Exception as e:
+                results[name] = {"error": str(e)}
+    return JSONResponse(content=results)
 
 
 @app.get("/")
