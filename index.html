@@ -133,121 +133,104 @@
     <script>
     (function () {
         const canvas = document.getElementById('bgCanvas');
-        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: false });
+        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
         renderer.setSize(window.innerWidth, window.innerHeight);
 
         const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 200);
-        camera.position.set(0, 5, 22);
-        camera.lookAt(0, 0, 0);
+        const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 200);
+        camera.position.set(2.5, 0, 13);
+        camera.lookAt(2.5, 0, 0);
 
         const ADD = THREE.AdditiveBlending;
 
-        /* ── PERSPECTIVE GRID FLOOR (Tron-style) ────────── */
-        const grid = new THREE.GridHelper(60, 30, 0x0e7490, 0x0e3042);
-        grid.position.y = -5;
-        grid.material.transparent = true;
-        grid.material.opacity = 0.35;
-        scene.add(grid);
-
-        /* ── CANDLESTICK BARS ────────────────────────────── */
-        const bars = [];
-        const BAR_COUNT = 28;
-        for (let i = 0; i < BAR_COUNT; i++) {
-            // body
-            const body = new THREE.Mesh(
-                new THREE.BoxGeometry(0.35, 1, 0.35),
-                new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.55, blending: ADD, depthWrite: false })
+        /* ── CENTRAL GLOW LAYERS (stacked spheres) ────────── */
+        [4.2, 3.2, 2.2, 1.4, 0.7].forEach((r, i) => {
+            const m = new THREE.Mesh(
+                new THREE.SphereGeometry(r, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    color: i < 2 ? 0x0e4d6e : 0x22d3ee,
+                    transparent: true,
+                    opacity: [0.025, 0.045, 0.08, 0.14, 0.30][i],
+                    blending: ADD, depthWrite: false,
+                })
             );
-            // wick (thin vertical line)
-            const wickGeo = new THREE.BoxGeometry(0.05, 2, 0.05);
-            const wick = new THREE.Mesh(wickGeo,
-                new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.3, blending: ADD, depthWrite: false })
-            );
-            const group = new THREE.Group();
-            group.add(body);
-            group.add(wick);
+            scene.add(m);
+        });
 
-            const x = (i - BAR_COUNT / 2) * 1.35;
-            const z = -3 + (Math.random() - 0.5) * 6;
-            group.position.set(x, -5, z);
-            group.userData = {
-                phase:     Math.random() * Math.PI * 2,
-                speed:     0.25 + Math.random() * 0.4,
-                amplitude: 1.2 + Math.random() * 2.2,
-                baseH:     0.4 + Math.random() * 0.8,
-                body, wick,
-                lastH: 1,
-            };
-            scene.add(group);
-            bars.push(group);
-        }
+        /* ── WIREFRAME SPHERE ─────────────────────────────── */
+        const wireSphere = new THREE.Mesh(
+            new THREE.SphereGeometry(1.5, 14, 14),
+            new THREE.MeshBasicMaterial({
+                color: 0x22d3ee, wireframe: true,
+                transparent: true, opacity: 0.18,
+                blending: ADD, depthWrite: false,
+            })
+        );
+        scene.add(wireSphere);
 
-        /* ── ANIMATED PRICE LINES ────────────────────────── */
-        const LINE_SEGS = 80;
-        const lineConfigs = [
-            { color: 0x22d3ee, z: -2,  yOff:  1.5, speed: 0.7,  amp: 2.2 },
-            { color: 0xa78bfa, z: -5,  yOff:  0.0, speed: 0.5,  amp: 1.8 },
-            { color: 0x10b981, z: -8,  yOff: -1.5, speed: 0.9,  amp: 1.4 },
-            { color: 0xfbbf24, z: -11, yOff: -3.0, speed: 0.4,  amp: 2.5 },
+        /* ── ORBITAL RINGS ───────────────────────────────── */
+        const orbCfg = [
+            { radius: 3.0, rx: 0.30, ry: 0.10, color: 0x22d3ee, spd:  0.55, dots: 2 },
+            { radius: 3.7, rx: 1.25, ry: 0.60, color: 0xa78bfa, spd: -0.35, dots: 1 },
+            { radius: 4.3, rx: 0.70, ry: 1.40, color: 0x10b981, spd:  0.42, dots: 2 },
+            { radius: 4.9, rx: 1.80, ry: 0.30, color: 0xfbbf24, spd: -0.60, dots: 1 },
+            { radius: 2.5, rx: 0.90, ry: 1.70, color: 0xf472b6, spd:  0.80, dots: 1 },
         ];
-        const priceLines = lineConfigs.map((cfg, li) => {
-            const pts = Array.from({ length: LINE_SEGS }, (_, i) =>
-                new THREE.Vector3(-18 + (i / (LINE_SEGS - 1)) * 36, cfg.yOff, cfg.z)
-            );
-            const geo = new THREE.BufferGeometry().setFromPoints(pts);
-            const mat = new THREE.LineBasicMaterial({
-                color: cfg.color, transparent: true,
-                opacity: 0.45, blending: ADD,
+
+        const ringGroups = orbCfg.map(cfg => {
+            const grp = new THREE.Group();
+            grp.rotation.set(cfg.rx, cfg.ry, 0);
+
+            // Ring — two torus layers for glow effect
+            [0.045, 0.018].forEach((thick, ti) => {
+                grp.add(new THREE.Mesh(
+                    new THREE.TorusGeometry(cfg.radius, thick, 8, 90),
+                    new THREE.MeshBasicMaterial({
+                        color: cfg.color, transparent: true,
+                        opacity: ti === 0 ? 0.18 : 0.60,
+                        blending: ADD, depthWrite: false,
+                    })
+                ));
             });
-            const line = new THREE.Line(geo, mat);
-            line.userData = { pts, cfg, phase: li * 1.3 };
-            scene.add(line);
-            return line;
+
+            // Glowing dots travelling the ring
+            const dots = Array.from({ length: cfg.dots }, (_, d) => {
+                const dg = new THREE.Group();
+                dg.userData.phase = (d / cfg.dots) * Math.PI * 2;
+                [0.20, 0.11, 0.06].forEach((r, ri) => {
+                    dg.add(new THREE.Mesh(
+                        new THREE.SphereGeometry(r, 8, 8),
+                        new THREE.MeshBasicMaterial({
+                            color: cfg.color, transparent: true,
+                            opacity: [0.25, 0.55, 1.0][ri],
+                            blending: ADD, depthWrite: false,
+                        })
+                    ));
+                });
+                grp.add(dg);
+                return dg;
+            });
+
+            grp.userData = { cfg, dots, baseRx: cfg.rx, baseRy: cfg.ry };
+            scene.add(grp);
+            return grp;
         });
 
-        /* ── FLOATING DATA PARTICLES ─────────────────────── */
-        const PCOUNT = 280;
-        const pgeo   = new THREE.BufferGeometry();
-        const ppos   = new Float32Array(PCOUNT * 3);
-        const pcol   = new Float32Array(PCOUNT * 3);
-        const pvel   = new Float32Array(PCOUNT * 3);
-        const palette = [
-            [0.13, 0.83, 0.93],  // cyan
-            [0.65, 0.55, 0.98],  // violet
-            [0.06, 0.72, 0.51],  // green
-            [0.98, 0.75, 0.15],  // gold
-        ];
-        for (let i = 0; i < PCOUNT; i++) {
-            ppos[i*3]   = (Math.random() - 0.5) * 44;
-            ppos[i*3+1] = (Math.random() - 0.5) * 18;
-            ppos[i*3+2] = (Math.random() - 0.5) * 16 - 4;
-            pvel[i*3]   = (Math.random() - 0.5) * 0.012;
-            pvel[i*3+1] = 0.003 + Math.random() * 0.008;  // mostly drift upward
-            pvel[i*3+2] = (Math.random() - 0.5) * 0.005;
-            const c = palette[Math.floor(Math.random() * palette.length)];
-            pcol[i*3] = c[0]; pcol[i*3+1] = c[1]; pcol[i*3+2] = c[2];
+        /* ── STAR FIELD ──────────────────────────────────── */
+        const STARS = 500;
+        const sg = new THREE.BufferGeometry();
+        const sp = new Float32Array(STARS * 3);
+        for (let i = 0; i < STARS; i++) {
+            sp[i*3]   = (Math.random() - 0.5) * 90;
+            sp[i*3+1] = (Math.random() - 0.5) * 70;
+            sp[i*3+2] = (Math.random() - 0.5) * 50 - 10;
         }
-        pgeo.setAttribute('position', new THREE.BufferAttribute(ppos, 3));
-        pgeo.setAttribute('color',    new THREE.BufferAttribute(pcol, 3));
-        const pmat = new THREE.PointsMaterial({
-            size: 0.1, vertexColors: true, transparent: true, opacity: 0.6,
-            blending: ADD, depthWrite: false, sizeAttenuation: true,
-        });
-        scene.add(new THREE.Points(pgeo, pmat));
-
-        /* ── GLOWING PRICE LEVEL RINGS ───────────────────── */
-        [0x22d3ee, 0xa78bfa, 0xfbbf24].forEach((color, i) => {
-            const ring = new THREE.Mesh(
-                new THREE.TorusGeometry(3 + i * 2.5, 0.02, 6, 60),
-                new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.18, blending: ADD, depthWrite: false })
-            );
-            ring.rotation.x = Math.PI / 2;
-            ring.position.set((i - 1) * 6, -1 + i * 1.5, -6);
-            ring.userData = { baseY: ring.position.y, idx: i };
-            scene.add(ring);
-        });
+        sg.setAttribute('position', new THREE.BufferAttribute(sp, 3));
+        scene.add(new THREE.Points(sg, new THREE.PointsMaterial({
+            color: 0xffffff, size: 0.07, transparent: true, opacity: 0.55,
+            blending: ADD, depthWrite: false,
+        })));
 
         /* ── MOUSE ───────────────────────────────────────── */
         const mouse  = { x: 0, y: 0 };
@@ -268,69 +251,42 @@
             requestAnimationFrame(animate);
             const t = (frame++) * 0.016;
 
-            smooth.x += (mouse.x - smooth.x) * 0.045;
-            smooth.y += (mouse.y - smooth.y) * 0.045;
+            smooth.x += (mouse.x - smooth.x) * 0.05;
+            smooth.y += (mouse.y - smooth.y) * 0.05;
 
-            /* Candlestick bars — rise and fall like live prices */
-            bars.forEach(grp => {
-                const d = grp.userData;
-                const newH = d.baseH + Math.abs(Math.sin(t * d.speed + d.phase)) * d.amplitude;
-                d.body.scale.y += (newH - d.body.scale.y) * 0.07;
-                d.body.position.y = d.body.scale.y / 2;
-                d.wick.scale.y    = d.body.scale.y * 1.6;
-                d.wick.position.y = d.body.position.y;
+            // Wireframe rotates slowly
+            wireSphere.rotation.y = t * 0.18;
+            wireSphere.rotation.x = t * 0.09;
 
-                const goingUp = d.body.scale.y > d.lastH;
-                d.body.material.color.setHex(goingUp ? 0x22d3ee : 0xf43f5e);
-                d.wick.material.color.setHex(goingUp ? 0x22d3ee : 0xf43f5e);
-                d.body.material.opacity = 0.3 + Math.abs(Math.sin(t * 1.5 + d.phase)) * 0.3;
-                d.lastH = d.body.scale.y;
+            // Rings orbit + tilt with mouse
+            ringGroups.forEach((grp, gi) => {
+                const { cfg, dots, baseRx, baseRy } = grp.userData;
+                grp.rotation.z += cfg.spd * 0.008;
+                grp.rotation.x  = baseRx + smooth.y * (0.18 + gi * 0.04);
+                grp.rotation.y  = baseRy + smooth.x * (0.18 + gi * 0.04);
 
-                // Subtle sway with cursor
-                grp.rotation.z = smooth.x * 0.06;
+                dots.forEach(dot => {
+                    const angle = t * cfg.spd * 0.9 + dot.userData.phase;
+                    dot.position.set(
+                        Math.cos(angle) * cfg.radius,
+                        Math.sin(angle) * cfg.radius,
+                        0
+                    );
+                });
             });
 
-            /* Price lines — live market chart feel */
-            priceLines.forEach(line => {
-                const { pts, cfg, phase } = line.userData;
-                for (let i = 0; i < LINE_SEGS; i++) {
-                    const x = pts[i].x;
-                    pts[i].y = cfg.yOff
-                        + Math.sin(x * 0.18 + t * cfg.speed + phase) * cfg.amp
-                        + Math.sin(x * 0.07 + t * cfg.speed * 0.4) * (cfg.amp * 0.5)
-                        + smooth.y * 0.6;
-                }
-                line.geometry.setFromPoints(pts);
-                line.geometry.attributes.position.needsUpdate = true;
-                line.position.x = smooth.x * (1.5 + line.userData.cfg.z * -0.1);
-            });
-
-            /* Particles drift upward, wrap at top */
-            const pp = pgeo.attributes.position.array;
-            for (let i = 0; i < PCOUNT; i++) {
-                pp[i*3]   += pvel[i*3];
-                pp[i*3+1] += pvel[i*3+1];
-                pp[i*3+2] += pvel[i*3+2];
-                if (pp[i*3+1] >  10) pp[i*3+1] = -10;   // wrap top→bottom
-                if (pp[i*3]   >  22) pp[i*3]   = -22;
-                if (pp[i*3]   < -22) pp[i*3]   =  22;
-            }
-            pgeo.attributes.position.needsUpdate = true;
-
-            /* Grid tilts with mouse — like looking at a trading floor */
-            grid.rotation.x = 0.05 + smooth.y * 0.04;
-            grid.position.x  = smooth.x * 2;
-
-            /* Camera parallax */
-            camera.position.x += (smooth.x * 4   - camera.position.x) * 0.035;
-            camera.position.y += (smooth.y * 2 + 5 - camera.position.y) * 0.035;
-            camera.lookAt(0, 0, 0);
+            // Camera gentle parallax with cursor
+            camera.position.x += (2.5 + smooth.x * 1.8 - camera.position.x) * 0.04;
+            camera.position.y += (smooth.y * 1.2 - camera.position.y) * 0.04;
+            camera.lookAt(2.5, 0, 0);
 
             renderer.render(scene, camera);
         }
         animate();
+
     })();
     </script>
+
 
     <!-- LIVE STATUS TICKER -->
     <div class="ticker-wrap">
