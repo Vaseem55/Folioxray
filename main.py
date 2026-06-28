@@ -259,13 +259,19 @@ async def analyze_portfolio_categories(portfolio_data: list) -> dict:
 async def build_full_report(domestic_portfolio: list) -> dict:
     import asyncio
 
-    # Fetch holdings for ALL domestic funds in parallel (static DB = instant)
+    # Fetch holdings + AI analysis in parallel
     all_names = [f["scheme_name"] for f in domestic_portfolio]
-    holdings_results = await asyncio.gather(*[fetch_live_market_holdings(n) for n in all_names])
-    fund_holdings_map = {name: h for name, h in zip(all_names, holdings_results)}
+    results = await asyncio.gather(
+        asyncio.gather(*[fetch_live_market_holdings(n) for n in all_names]),
+        analyze_portfolio_categories(domestic_portfolio),
+        return_exceptions=True
+    )
+    holdings_list = results[0] if not isinstance(results[0], Exception) else [[] for _ in all_names]
+    ai_advice = results[1] if not isinstance(results[1], Exception) else {"overlap_detected": False, "overlapping_funds": []}
+    if isinstance(ai_advice, Exception):
+        ai_advice = {"overlap_detected": False, "overlapping_funds": [], "analysis_summary": "Analysis unavailable.", "suggested_replacements": []}
 
-    # Run AI category analysis in parallel with holdings fetch (already done above)
-    ai_advice = await analyze_portfolio_categories(domestic_portfolio)
+    fund_holdings_map = {name: h for name, h in zip(all_names, holdings_list)}
 
     overlapping_stocks_master = {}
     mapped_overlapping_funds = []
