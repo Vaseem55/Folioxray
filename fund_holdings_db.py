@@ -434,17 +434,33 @@ FUND_ALIASES = {
 }
 
 
+def _clean_fund_name(fund_name: str) -> str:
+    """Normalize fund name for matching."""
+    import re
+    name = fund_name.lower().strip()
+    # Replace hyphens with spaces
+    name = name.replace("-", " ")
+    # Remove noise words/suffixes
+    noise = [
+        "non demat", "demat", "direct plan", "regular plan", "direct",
+        "regular", "growth", "idcw", "dividend", "payout", "reinvestment",
+        r"\(g\)", r"\(d\)", r"\(idcw\)", r"\(nr\)", r"\(non demat\)",
+        r"\(demat\)", "plan", "option",
+    ]
+    for n in noise:
+        name = re.sub(r"\b" + n + r"\b", " ", name)
+    # Collapse whitespace
+    name = re.sub(r"\s+", " ", name).strip()
+    return name
+
+
 def lookup_fund_holdings(fund_name: str):
     """Look up holdings from static DB using fuzzy matching. Returns (holdings, matched_name) or (None, None)."""
     from difflib import SequenceMatcher
 
-    name = fund_name.lower().strip()
-    # Remove common suffixes that don't help matching
-    for suffix in [" direct plan", " direct", " growth", " (g)", "- growth", "- direct", "regular plan", "regular"]:
-        name = name.replace(suffix, "")
-    name = name.strip()
+    name = _clean_fund_name(fund_name)
 
-    # Check aliases first
+    # Check aliases first (also clean alias keys)
     for alias, canonical in FUND_ALIASES.items():
         if alias in name or name in alias:
             return FUND_HOLDINGS[canonical], canonical
@@ -457,12 +473,14 @@ def lookup_fund_holdings(fund_name: str):
     best_score = 0.0
     best_key = None
     for key in FUND_HOLDINGS:
-        score = SequenceMatcher(None, name, key).ratio()
+        clean_key = _clean_fund_name(key)
+        score = SequenceMatcher(None, name, clean_key).ratio()
         if score > best_score:
             best_score = score
             best_key = key
 
-    if best_score >= 0.55:
+    print(f"  Fund lookup '{name}' -> best='{best_key}' score={best_score:.2f}")
+    if best_score >= 0.50:
         return FUND_HOLDINGS[best_key], best_key
 
     return None, None
