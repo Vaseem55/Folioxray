@@ -323,6 +323,7 @@ async def build_full_report(domestic_portfolio: list) -> dict:
     ai_advice["overlapping_funds_rich"] = mapped_overlapping_funds
     ai_advice["overlapping_stocks_detail"] = final_overlapping_stocks
     ai_advice["pair_overlaps"] = pair_overlaps
+    ai_advice["debug_holdings_found"] = {k: len(v) for k, v in fund_holdings_map.items()}
     return ai_advice
 
 
@@ -422,6 +423,38 @@ def is_international_fund(name: str) -> bool:
 # =====================================================================
 # ENDPOINTS
 # =====================================================================
+
+@app.get("/debug-mftool")
+async def debug_mftool():
+    """Check if mftool works and what it returns."""
+    import asyncio
+    from concurrent.futures import ThreadPoolExecutor
+
+    def _test():
+        try:
+            from mftool import Mftool
+            mf = Mftool()
+            codes = mf.get_scheme_codes()
+            if not codes:
+                return {"error": "get_scheme_codes returned empty"}
+            # Find Axis Bluechip Direct
+            matches = {k: v for k, v in codes.items()
+                       if "axis" in v.lower() and "bluechip" in v.lower() and "direct" in v.lower()}
+            if not matches:
+                return {"error": "No Axis Bluechip Direct found", "total_codes": len(codes),
+                        "sample": dict(list(codes.items())[:5])}
+            code, name = next(iter(matches.items()))
+            portfolio = mf.get_scheme_portfolio(code)
+            return {"scheme_code": code, "scheme_name": name, "portfolio_keys": list(portfolio.keys()) if portfolio else None,
+                    "portfolio_sample": portfolio}
+        except Exception as e:
+            return {"error": str(e), "type": type(e).__name__}
+
+    loop = asyncio.get_event_loop()
+    with ThreadPoolExecutor() as pool:
+        result = await loop.run_in_executor(pool, _test)
+    return JSONResponse(content=result)
+
 
 @app.get("/")
 async def serve_frontend():
