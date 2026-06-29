@@ -508,6 +508,45 @@ def is_non_equity_fund(name: str) -> bool:
 # ENDPOINTS
 # =====================================================================
 
+@app.get("/screen-by-stock")
+async def screen_by_stock(stock: str, min_weight: float = 0.0):
+    """
+    Free endpoint: find all funds in the DB that hold a given stock.
+    Usage: /screen-by-stock?stock=Reliance+Industries&min_weight=2
+    Returns funds sorted by weight descending.
+    """
+    from fund_holdings_db import FUND_HOLDINGS
+    import difflib
+
+    stock_query = stock.strip().lower()
+    results = []
+
+    for fund_name, holdings in FUND_HOLDINGS.items():
+        for h in holdings:
+            s_name = h.get("stock_name", "")
+            w = float(h.get("weight_percent", 0))
+            # fuzzy match stock name
+            ratio = difflib.SequenceMatcher(None, stock_query, s_name.lower()).ratio()
+            if ratio >= 0.72 or stock_query in s_name.lower():
+                if w >= min_weight:
+                    results.append({
+                        "fund_name": fund_name,
+                        "stock_name": s_name,
+                        "weight_percent": round(w, 2),
+                        "match_score": round(ratio, 2),
+                    })
+                break  # one match per fund
+
+    results.sort(key=lambda x: x["weight_percent"], reverse=True)
+
+    return JSONResponse(content={
+        "stock_query": stock,
+        "min_weight": min_weight,
+        "funds_found": len(results),
+        "results": results,
+    })
+
+
 @app.get("/sip-breakdown")
 async def sip_breakdown(funds: str, sip_amount: float = 1000):
     """

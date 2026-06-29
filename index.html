@@ -617,6 +617,7 @@
             <a class="nav-link" onclick="document.getElementById('uploadPanel').classList.remove('hidden')">How It Works</a>
             <a class="nav-link" onclick="document.getElementById('compareSection').scrollIntoView({behavior:'smooth'})">Free Compare</a>
             <a class="nav-link" onclick="document.getElementById('sipSection').scrollIntoView({behavior:'smooth'})">SIP Calculator</a>
+            <a class="nav-link" onclick="document.getElementById('screenerSection').scrollIntoView({behavior:'smooth'})">Fund Screener</a>
             <div class="nav-dropdown-wrapper">
                 <a class="nav-link" id="contactToggle" onclick="toggleContactDropdown(event)">Contact</a>
                 <div class="nav-dropdown hidden" id="contactDropdown">
@@ -801,6 +802,85 @@
         <div id="sipResults" class="hidden"></div>
 
     </section>
+
+    <!-- ── FUND SCREENER SECTION ───────────────────────── -->
+    <section id="screenerSection" style="padding:2rem 1.5rem 5rem;max-width:860px;margin:0 auto;">
+
+        <div style="border-top:1px solid rgba(255,255,255,0.06);margin-bottom:4rem;"></div>
+
+        <!-- Header -->
+        <div style="text-align:center;margin-bottom:2.5rem;">
+            <div style="display:inline-flex;align-items:center;gap:0.5rem;background:rgba(167,139,250,0.08);border:1px solid rgba(167,139,250,0.2);border-radius:100px;padding:0.35rem 1rem;margin-bottom:1.25rem;">
+                <span style="width:6px;height:6px;border-radius:50%;background:#a78bfa;display:inline-block;" class="pulse-dot"></span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;letter-spacing:0.14em;text-transform:uppercase;color:#a78bfa;">Free Tool</span>
+            </div>
+            <h2 style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:clamp(2rem,4vw,3rem);letter-spacing:-0.03em;color:#ffffff;line-height:1.1;margin-bottom:0.75rem;">
+                Find Every Fund<br><span style="color:#a78bfa;">That Holds a Stock.</span>
+            </h2>
+            <p style="font-size:0.9rem;color:rgba(255,255,255,0.45);max-width:500px;margin:0 auto;line-height:1.7;">
+                Already own Reliance or HDFC Bank directly? See which of your mutual funds are doubling up on the same stock — and by how much.
+            </p>
+        </div>
+
+        <!-- Input card -->
+        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:2rem;margin-bottom:1.5rem;">
+            <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:1rem;">
+                <div style="flex:2;min-width:200px;">
+                    <label class="form-label">Stock / Company Name</label>
+                    <input type="text" id="screenerStock" placeholder="e.g. Reliance Industries" class="form-input">
+                </div>
+                <div style="flex:0 0 140px;">
+                    <label class="form-label">Min Weight (%)</label>
+                    <div style="position:relative;">
+                        <input type="number" id="screenerMinWeight" value="0" min="0" max="20" step="0.5" class="form-input" style="padding-right:1.6rem;">
+                        <span style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);color:#64748b;font-size:0.8rem;font-family:'JetBrains Mono',monospace;">%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Popular stock chips -->
+            <div style="margin-bottom:1.25rem;">
+                <p style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;color:#475569;margin-bottom:0.6rem;">Popular searches</p>
+                <div style="display:flex;flex-wrap:wrap;gap:0.4rem;">
+                    <button onclick="quickScreen('HDFC Bank')" class="screen-chip">HDFC Bank</button>
+                    <button onclick="quickScreen('Reliance Industries')" class="screen-chip">Reliance Industries</button>
+                    <button onclick="quickScreen('Infosys')" class="screen-chip">Infosys</button>
+                    <button onclick="quickScreen('Tata Consultancy Services')" class="screen-chip">TCS</button>
+                    <button onclick="quickScreen('ICICI Bank')" class="screen-chip">ICICI Bank</button>
+                    <button onclick="quickScreen('Axis Bank')" class="screen-chip">Axis Bank</button>
+                    <button onclick="quickScreen('Bajaj Finance')" class="screen-chip">Bajaj Finance</button>
+                    <button onclick="quickScreen('Larsen & Toubro')" class="screen-chip">L&T</button>
+                </div>
+            </div>
+
+            <button id="screenerBtn" onclick="runScreener()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:0.5rem;background:#a78bfa;color:#050508;font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:0.88rem;letter-spacing:0.05em;text-transform:uppercase;padding:0.85rem 1.5rem;border-radius:10px;border:none;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='#c4b5fd'" onmouseout="this.style.background='#a78bfa'">
+                <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                Find Funds
+            </button>
+        </div>
+
+        <!-- Screener Results -->
+        <div id="screenerResults" class="hidden"></div>
+
+    </section>
+
+    <style>
+        .screen-chip {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.3rem 0.75rem;
+            border-radius: 100px;
+            background: rgba(167,139,250,0.07);
+            border: 1px solid rgba(167,139,250,0.18);
+            color: #a78bfa;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .screen-chip:hover {
+            background: rgba(167,139,250,0.16);
+            border-color: rgba(167,139,250,0.4);
+        }
+    </style>
 
     <!-- ── UPLOAD PANEL (overlay) ────────────────────── -->
     <div id="uploadPanel" class="upload-overlay hidden">
@@ -1525,6 +1605,106 @@
                 btn.disabled = false;
             }
         }
+
+        // —— Fund Screener ———————————————————————————————————————————
+        function quickScreen(name) {
+            document.getElementById('screenerStock').value = name;
+            runScreener();
+        }
+
+        async function runScreener() {
+            const stock = document.getElementById('screenerStock').value.trim();
+            const minW  = parseFloat(document.getElementById('screenerMinWeight').value) || 0;
+            if (!stock) { alert('Enter a stock or company name.'); return; }
+
+            const btn = document.getElementById('screenerBtn');
+            btn.innerHTML = `${SPINNER}&nbsp; Searching...`;
+            btn.disabled = true;
+
+            const resultsEl = document.getElementById('screenerResults');
+            resultsEl.classList.add('hidden');
+            resultsEl.innerHTML = '';
+
+            try {
+                const res = await fetch(`/screen-by-stock?stock=${encodeURIComponent(stock)}&min_weight=${minW}`);
+                const data = await res.json();
+
+                if (!data.results) {
+                    resultsEl.innerHTML = `<div style="background:rgba(244,63,94,0.06);border:1px solid rgba(244,63,94,0.2);border-radius:14px;padding:1.25rem;font-size:0.875rem;color:#fda4af;">${data.error || 'Unknown error'}</div>`;
+                    resultsEl.classList.remove('hidden');
+                    return;
+                }
+
+                const results = data.results;
+                const maxW = results.length ? results[0].weight_percent : 1;
+
+                let html = '';
+
+                if (!results.length) {
+                    html = `<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:2rem;text-align:center;">
+                        <p style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.1rem;color:#ffffff;margin-bottom:0.5rem;">No funds found</p>
+                        <p style="font-size:0.82rem;color:#475569;">No fund in our database holds <strong style="color:#a78bfa;">${stock}</strong>${minW > 0 ? ` above ${minW}%` : ''}.<br>Try a shorter name or check the spelling.</p>
+                    </div>`;
+                } else {
+                    // Summary bar
+                    html += `<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;margin-bottom:1.25rem;">
+                        <div>
+                            <p style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:1.25rem;color:#ffffff;">${results[0].stock_name}</p>
+                            <p style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:#475569;margin-top:0.2rem;text-transform:uppercase;letter-spacing:0.08em;">held by ${results.length} fund${results.length !== 1 ? 's' : ''} in our database</p>
+                        </div>
+                        <div style="background:rgba(167,139,250,0.08);border:1px solid rgba(167,139,250,0.2);border-radius:12px;padding:0.75rem 1.25rem;text-align:center;">
+                            <p style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:#a78bfa;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.2rem;">Highest weight</p>
+                            <p style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:1.5rem;color:#ffffff;">${maxW}%</p>
+                            <p style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:#64748b;">${results[0].fund_name.split(' ').slice(0,4).join(' ')}</p>
+                        </div>
+                    </div>`;
+
+                    // Fund cards
+                    html += `<div style="display:flex;flex-direction:column;gap:0.6rem;margin-bottom:1rem;">`;
+                    results.forEach((r, idx) => {
+                        const barPct = maxW > 0 ? (r.weight_percent / maxW * 100).toFixed(1) : 0;
+                        const rankColor = idx === 0 ? '#a78bfa' : idx === 1 ? '#7c3aed' : idx === 2 ? '#6d28d9' : '#334155';
+                        html += `<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:1rem 1.25rem;display:flex;align-items:center;gap:1rem;">
+                            <span style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;font-weight:700;color:${rankColor};width:24px;flex-shrink:0;text-align:center;">#${idx+1}</span>
+                            <div style="flex:1;min-width:0;">
+                                <p style="font-size:0.85rem;font-weight:600;color:#e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.fund_name}</p>
+                                <div style="background:rgba(255,255,255,0.06);border-radius:100px;height:5px;overflow:hidden;margin-top:0.5rem;">
+                                    <div style="background:linear-gradient(90deg,#a78bfa,#7c3aed);height:5px;border-radius:100px;width:${barPct}%;"></div>
+                                </div>
+                            </div>
+                            <span style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:1.05rem;color:#a78bfa;flex-shrink:0;">${r.weight_percent}%</span>
+                        </div>`;
+                    });
+                    html += `</div>`;
+                }
+
+                // CTA
+                html += `<div style="text-align:center;padding:1.5rem;background:rgba(167,139,250,0.04);border:1px solid rgba(167,139,250,0.12);border-radius:16px;">
+                    <p style="font-size:0.85rem;color:#64748b;margin-bottom:1rem;">See how much of <em style="color:#ffffff;">${stock}</em> you already own across your whole portfolio.</p>
+                    <button onclick="document.getElementById('uploadPanel').classList.remove('hidden')" style="display:inline-flex;align-items:center;gap:0.5rem;background:#a78bfa;color:#050508;font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:0.82rem;letter-spacing:0.05em;text-transform:uppercase;padding:0.75rem 1.75rem;border-radius:10px;border:none;cursor:pointer;">
+                        Upload CAS → Full Report — ₹99
+                    </button>
+                </div>`;
+
+                resultsEl.innerHTML = html;
+                resultsEl.classList.remove('hidden');
+                resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            } catch(err) {
+                resultsEl.innerHTML = `<div style="background:rgba(244,63,94,0.06);border:1px solid rgba(244,63,94,0.2);border-radius:14px;padding:1.25rem;font-size:0.875rem;color:#fda4af;">Connection error.</div>`;
+                resultsEl.classList.remove('hidden');
+            } finally {
+                btn.innerHTML = `<svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg> Find Funds`;
+                btn.disabled = false;
+            }
+        }
+
+        // Also trigger screener on Enter key
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('screenerStock').addEventListener('keydown', e => {
+                if (e.key === 'Enter') runScreener();
+            });
+        });
 
         // —— Contact dropdown ————————————————————————————————————————
         function toggleContactDropdown(e) {
