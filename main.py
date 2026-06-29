@@ -920,9 +920,13 @@ async def audit_cas_pdf(
             equity_names = [f["scheme_name"] for f in domestic_portfolio
                             if not is_non_equity_fund(f["scheme_name"])]
             holdings_map = {}
+            claimed_keys = {}
             for name in equity_names:
-                h, _ = lookup_fund_holdings(name)
-                if h:
+                h, matched_key = lookup_fund_holdings(name)
+                if h and matched_key:
+                    if matched_key in claimed_keys:
+                        continue  # wrong fuzzy match — skip duplicate
+                    claimed_keys[matched_key] = name
                     holdings_map[name] = {entry["stock_name"]: entry["weight_percent"] for entry in h}
 
             REDUNDANT_THRESHOLD = 10.0
