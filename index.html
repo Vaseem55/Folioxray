@@ -1322,6 +1322,7 @@
                 document.getElementById('uploadPanel').classList.add('hidden');
                 document.getElementById('heroSection').classList.add('hidden');
                 document.getElementById('resultsCard').classList.remove('hidden');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
 
                 animateValue(document.getElementById('valTotal'), currentTotalValue, { prefix: '₹', decimals: 0, duration: 1400 });
                 document.getElementById('fundCountLabel').innerText = data.fund_count + ' funds';
