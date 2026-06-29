@@ -456,17 +456,32 @@
         .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
         /* ── RESPONSIVE ─────────────────────────────────── */
-        @media (max-width: 900px) {
-            .editorial-nav { padding: 1rem 1.5rem; }
-            .nav-center { display: none; }
-            .hero-section { flex-direction: column; }
-            .hero-left { width: 100%; padding: 0 1.5rem 3rem; }
-            .hero-right { width: 100%; padding: 0 1.5rem 3rem; }
-            .hero-h1 { font-size: clamp(3.2rem, 12vw, 6rem); }
+        @media (max-width: 768px) {
+            .editorial-nav { padding: 0.85rem 1.25rem; }
+            .nav-links { gap: 1.2rem; }
+            .nav-link { font-size: 0.78rem; }
+            .nav-cta { padding: 0.45rem 0.9rem; font-size: 0.78rem; }
+            .hero-overlay {
+                background: linear-gradient(to bottom,
+                    rgba(4,6,14,0.78) 0%,
+                    rgba(4,6,14,0.68) 60%,
+                    rgba(4,6,14,0.50) 100%);
+            }
+            .hero-content { width: 100%; min-width: unset; padding: 2.5rem 1.4rem 3rem; }
+            .hero-h1 { font-size: clamp(1.9rem, 7.5vw, 2.8rem); margin-bottom: 0.9rem; }
+            .hero-label { font-size: 0.6rem; margin-bottom: 0.8rem; }
+            .hero-desc { font-size: 0.88rem; margin-bottom: 1.4rem; max-width: 100%; }
+            .hero-cta-btn { max-width: 100%; padding: 0.95rem; font-size: 0.82rem; margin-bottom: 1.25rem; }
+            .hero-float-icons { display: none; }
+            .hero-pills { gap: 0.35rem; }
+            .hero-pill { font-size: 0.56rem; padding: 0.28rem 0.6rem; }
         }
-        @media (max-width: 600px) {
-            .hero-left { padding: 0 1.25rem 2.5rem; }
-            .editorial-nav { padding: 1rem; }
+        @media (max-width: 480px) {
+            .nav-links { gap: 0.8rem; }
+            .nav-link { font-size: 0.72rem; }
+            .nav-cta { padding: 0.4rem 0.75rem; font-size: 0.72rem; }
+            .hero-content { padding: 2rem 1.1rem 2.5rem; }
+            .hero-h1 { font-size: clamp(1.65rem, 6.5vw, 2.2rem); }
         }
 
         /* ── ANIMATE spin ───────────────────────────────── */
