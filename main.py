@@ -508,6 +508,87 @@ def is_non_equity_fund(name: str) -> bool:
 # ENDPOINTS
 # =====================================================================
 
+@app.get("/sip-breakdown")
+async def sip_breakdown(funds: str, sip_amount: float = 1000):
+    """
+    Free endpoint: given fund allocations and monthly SIP, show actual stocks being bought.
+    Usage: /sip-breakdown?funds=hdfc+small+cap+fund:60,axis+bluechip+fund:40&sip_amount=10000
+    Each fund entry is  name:allocation_percent  separated by commas.
+    """
+    if sip_amount <= 0 or sip_amount > 10_000_000:
+        return JSONResponse(status_code=400, content={"error": "sip_amount must be between 1 and 10,000,000"})
+
+    raw_entries = [e.strip() for e in funds.split(",") if e.strip()]
+    if not raw_entries:
+        return JSONResponse(status_code=400, content={"error": "Provide fund:allocation pairs e.g. hdfc small cap fund:60,axis bluechip:40"})
+
+    parsed = []
+    for entry in raw_entries:
+        if ":" in entry:
+            parts = entry.rsplit(":", 1)
+            name = parts[0].strip()
+            try:
+                alloc = float(parts[1].strip())
+            except:
+                return JSONResponse(status_code=400, content={"error": f"Invalid allocation for '{name}'"})
+        else:
+            name = entry
+            alloc = round(100 / len(raw_entries), 2)
+        parsed.append({"name": name, "alloc": alloc})
+
+    total_alloc = sum(p["alloc"] for p in parsed)
+
+    fund_results = []
+    not_found = []
+    for p in parsed:
+        holdings, matched = lookup_fund_holdings(p["name"])
+        sip_slice = round(sip_amount * p["alloc"] / total_alloc, 2)
+        if holdings:
+            stocks = []
+            for h in holdings:
+                stock = h.get("stock_name", "")
+                w = float(h.get("weight_percent", 0))
+                if stock and w > 0:
+                    stocks.append({
+                        "stock_name": stock,
+                        "weight_percent": round(w, 2),
+                        "monthly_rupees": round(sip_slice * w / 100, 2),
+                    })
+            stocks.sort(key=lambda x: x["monthly_rupees"], reverse=True)
+            fund_results.append({
+                "fund_name": matched,
+                "input_name": p["name"],
+                "allocation_percent": round(p["alloc"] / total_alloc * 100, 1),
+                "monthly_sip_inr": sip_slice,
+                "holdings_count": len(stocks),
+                "top_stocks": stocks[:15],
+            })
+        else:
+            not_found.append(p["name"])
+
+    # Aggregate across all funds — blended stock exposure
+    stock_totals = {}
+    for f in fund_results:
+        for s in f["top_stocks"]:
+            k = s["stock_name"]
+            if k not in stock_totals:
+                stock_totals[k] = {"stock_name": k, "monthly_rupees": 0.0, "funds": []}
+            stock_totals[k]["monthly_rupees"] += s["monthly_rupees"]
+            stock_totals[k]["funds"].append(f["fund_name"])
+
+    blended = sorted(stock_totals.values(), key=lambda x: x["monthly_rupees"], reverse=True)
+    for b in blended:
+        b["monthly_rupees"] = round(b["monthly_rupees"], 2)
+
+    return JSONResponse(content={
+        "sip_amount": sip_amount,
+        "total_allocation_used": round(total_alloc, 1),
+        "fund_breakdown": fund_results,
+        "blended_stock_exposure": blended[:30],
+        "not_found": not_found,
+    })
+
+
 @app.get("/compare-funds")
 async def compare_funds(funds: str):
     """

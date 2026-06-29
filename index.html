@@ -616,6 +616,7 @@
         <div class="nav-links">
             <a class="nav-link" onclick="document.getElementById('uploadPanel').classList.remove('hidden')">How It Works</a>
             <a class="nav-link" onclick="document.getElementById('compareSection').scrollIntoView({behavior:'smooth'})">Free Compare</a>
+            <a class="nav-link" onclick="document.getElementById('sipSection').scrollIntoView({behavior:'smooth'})">SIP Calculator</a>
             <div class="nav-dropdown-wrapper">
                 <a class="nav-link" id="contactToggle" onclick="toggleContactDropdown(event)">Contact</a>
                 <div class="nav-dropdown hidden" id="contactDropdown">
@@ -731,6 +732,73 @@
 
         <!-- Results area -->
         <div id="compareResults" class="hidden"></div>
+
+    </section>
+
+    <!-- ── SIP CALCULATOR SECTION ──────────────────────── -->
+    <section id="sipSection" style="padding:2rem 1.5rem 5rem;max-width:860px;margin:0 auto;">
+
+        <!-- divider -->
+        <div style="border-top:1px solid rgba(255,255,255,0.06);margin-bottom:4rem;"></div>
+
+        <!-- Header -->
+        <div style="text-align:center;margin-bottom:2.5rem;">
+            <div style="display:inline-flex;align-items:center;gap:0.5rem;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:100px;padding:0.35rem 1rem;margin-bottom:1.25rem;">
+                <span style="width:6px;height:6px;border-radius:50%;background:#10b981;display:inline-block;" class="pulse-dot"></span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;letter-spacing:0.14em;text-transform:uppercase;color:#10b981;">Free Tool</span>
+            </div>
+            <h2 style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:clamp(2rem,4vw,3rem);letter-spacing:-0.03em;color:#ffffff;line-height:1.1;margin-bottom:0.75rem;">
+                What Does Your SIP<br><span style="color:#10b981;">Actually Buy?</span>
+            </h2>
+            <p style="font-size:0.9rem;color:rgba(255,255,255,0.45);max-width:500px;margin:0 auto;line-height:1.7;">
+                Enter your monthly SIP and fund mix — see the exact stocks your money flows into every month, down to the rupee.
+            </p>
+        </div>
+
+        <!-- Input card -->
+        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:2rem;margin-bottom:1.5rem;">
+
+            <!-- SIP amount -->
+            <div style="margin-bottom:1.5rem;">
+                <label class="form-label">Monthly SIP Amount (₹)</label>
+                <div style="position:relative;">
+                    <span style="position:absolute;left:1rem;top:50%;transform:translateY(-50%);font-family:'Space Grotesk',sans-serif;font-weight:700;color:#64748b;font-size:1rem;">₹</span>
+                    <input type="number" id="sipAmount" value="10000" min="100" max="10000000" class="form-input" style="padding-left:2rem;">
+                </div>
+            </div>
+
+            <!-- Fund rows -->
+            <label class="form-label" style="margin-bottom:0.75rem;">Your Funds & Allocation</label>
+            <div id="sipFundInputs" style="display:flex;flex-direction:column;gap:0.6rem;margin-bottom:1rem;">
+                <div class="sip-fund-row" style="display:flex;gap:0.6rem;align-items:center;">
+                    <input type="text" placeholder="Fund name" class="form-input sip-fund-name" style="flex:2;">
+                    <div style="position:relative;flex:0 0 90px;">
+                        <input type="number" value="60" min="1" max="100" class="form-input sip-fund-alloc" style="padding-right:1.6rem;text-align:right;">
+                        <span style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);color:#64748b;font-size:0.8rem;font-family:'JetBrains Mono',monospace;">%</span>
+                    </div>
+                </div>
+                <div class="sip-fund-row" style="display:flex;gap:0.6rem;align-items:center;">
+                    <input type="text" placeholder="Fund name" class="form-input sip-fund-name" style="flex:2;">
+                    <div style="position:relative;flex:0 0 90px;">
+                        <input type="number" value="40" min="1" max="100" class="form-input sip-fund-alloc" style="padding-right:1.6rem;text-align:right;">
+                        <span style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);color:#64748b;font-size:0.8rem;font-family:'JetBrains Mono',monospace;">%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+                <button onclick="addSipFund()" style="display:flex;align-items:center;gap:0.4rem;background:transparent;border:1px dashed rgba(255,255,255,0.15);color:rgba(255,255,255,0.4);font-family:'Inter',sans-serif;font-size:0.78rem;padding:0.55rem 1rem;border-radius:8px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='rgba(255,255,255,0.3)';this.style.color='rgba(255,255,255,0.7)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.15)';this.style.color='rgba(255,255,255,0.4)'">
+                    <span style="font-size:1rem;line-height:1;">+</span> Add Fund
+                </button>
+                <button id="sipCalcBtn" onclick="runSipCalc()" style="flex:1;min-width:180px;display:flex;align-items:center;justify-content:center;gap:0.5rem;background:#10b981;color:#050508;font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:0.88rem;letter-spacing:0.05em;text-transform:uppercase;padding:0.75rem 1.5rem;border-radius:10px;border:none;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='#34d399'" onmouseout="this.style.background='#10b981'">
+                    <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                    Calculate
+                </button>
+            </div>
+        </div>
+
+        <!-- SIP Results -->
+        <div id="sipResults" class="hidden"></div>
 
     </section>
 
@@ -1311,6 +1379,149 @@
                 resultsEl.classList.remove('hidden');
             } finally {
                 btn.innerHTML = `<svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg> Compare`;
+                btn.disabled = false;
+            }
+        }
+
+        // —— SIP Calculator ——————————————————————————————————————————
+        let sipFundCount = 2;
+
+        function addSipFund() {
+            if (sipFundCount >= 6) return;
+            sipFundCount++;
+            const row = document.createElement('div');
+            row.className = 'sip-fund-row';
+            row.style.cssText = 'display:flex;gap:0.6rem;align-items:center;';
+            row.innerHTML = `
+                <input type="text" placeholder="Fund name" class="form-input sip-fund-name" style="flex:2;">
+                <div style="position:relative;flex:0 0 90px;">
+                    <input type="number" value="20" min="1" max="100" class="form-input sip-fund-alloc" style="padding-right:1.6rem;text-align:right;">
+                    <span style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);color:#64748b;font-size:0.8rem;font-family:'JetBrains Mono',monospace;">%</span>
+                </div>
+                <button onclick="this.parentElement.remove();sipFundCount--;" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#475569;width:34px;height:34px;border-radius:8px;cursor:pointer;flex-shrink:0;font-size:1rem;display:flex;align-items:center;justify-content:center;">×</button>`;
+            document.getElementById('sipFundInputs').appendChild(row);
+        }
+
+        async function runSipCalc() {
+            const sip = parseFloat(document.getElementById('sipAmount').value);
+            if (!sip || sip < 100) { alert('Enter a valid SIP amount (min ₹100)'); return; }
+
+            const nameInputs = [...document.querySelectorAll('.sip-fund-name')];
+            const allocInputs = [...document.querySelectorAll('.sip-fund-alloc')];
+            const fundPairs = nameInputs.map((el, i) => ({
+                name: el.value.trim(),
+                alloc: parseFloat(allocInputs[i]?.value) || 0
+            })).filter(p => p.name && p.alloc > 0);
+
+            if (fundPairs.length < 1) { alert('Enter at least one fund name and allocation.'); return; }
+
+            const btn = document.getElementById('sipCalcBtn');
+            btn.innerHTML = `${SPINNER}&nbsp; Calculating...`;
+            btn.disabled = true;
+
+            const resultsEl = document.getElementById('sipResults');
+            resultsEl.classList.add('hidden');
+            resultsEl.innerHTML = '';
+
+            try {
+                const fundsParam = encodeURIComponent(fundPairs.map(p => `${p.name}:${p.alloc}`).join(','));
+                const res = await fetch(`/sip-breakdown?funds=${fundsParam}&sip_amount=${sip}`);
+                const data = await res.json();
+
+                if (data.error) {
+                    resultsEl.innerHTML = `<div style="background:rgba(244,63,94,0.06);border:1px solid rgba(244,63,94,0.2);border-radius:14px;padding:1.25rem;font-size:0.875rem;color:#fda4af;">${data.error}</div>`;
+                    resultsEl.classList.remove('hidden');
+                    return;
+                }
+
+                const fmt = v => '₹' + v.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
+
+                let html = '';
+
+                // Not found
+                if (data.not_found && data.not_found.length) {
+                    html += `<div style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.2);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem;font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:#fcd34d;">⚠ Not found: ${data.not_found.join(', ')}</div>`;
+                }
+
+                // Per-fund breakdown
+                data.fund_breakdown.forEach(f => {
+                    const rows = f.top_stocks.map(s => `
+                        <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+                            <td style="padding:0.6rem 0.75rem;font-size:0.8rem;color:#cbd5e1;">${s.stock_name}</td>
+                            <td style="padding:0.6rem 0.75rem;font-size:0.75rem;color:#64748b;text-align:right;font-family:'JetBrains Mono',monospace;">${s.weight_percent}%</td>
+                            <td style="padding:0.6rem 0.75rem;font-size:0.82rem;font-weight:700;color:#10b981;text-align:right;font-family:'JetBrains Mono',monospace;">${fmt(s.monthly_rupees)}</td>
+                        </tr>`).join('');
+                    html += `<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:16px;overflow:hidden;margin-bottom:1rem;">
+                        <div style="padding:1.1rem 1.25rem;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;">
+                            <div>
+                                <p style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:0.92rem;color:#ffffff;">${f.fund_name}</p>
+                                <p style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:#475569;margin-top:0.2rem;">${f.allocation_percent}% of SIP · ${f.holdings_count} holdings</p>
+                            </div>
+                            <div style="text-align:right;">
+                                <p style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:1.2rem;color:#10b981;">${fmt(f.monthly_sip_inr)}<span style="font-size:0.7rem;font-weight:500;color:#475569;"> /mo</span></p>
+                            </div>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table style="width:100%;border-collapse:collapse;">
+                                <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+                                    <th style="padding:0.5rem 0.75rem;font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:#475569;text-transform:uppercase;letter-spacing:0.08em;text-align:left;">Stock</th>
+                                    <th style="padding:0.5rem 0.75rem;font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:#475569;text-transform:uppercase;letter-spacing:0.08em;text-align:right;">Weight</th>
+                                    <th style="padding:0.5rem 0.75rem;font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:#475569;text-transform:uppercase;letter-spacing:0.08em;text-align:right;">Monthly ₹</th>
+                                </tr></thead>
+                                <tbody>${rows}</tbody>
+                            </table>
+                        </div>
+                    </div>`;
+                });
+
+                // Blended view
+                if (data.fund_breakdown.length > 1 && data.blended_stock_exposure.length) {
+                    const blendedRows = data.blended_stock_exposure.slice(0, 20).map(s => {
+                        const fundTags = [...new Set(s.funds)].map(f =>
+                            `<span style="font-family:'JetBrains Mono',monospace;font-size:0.58rem;background:rgba(34,211,238,0.08);border:1px solid rgba(34,211,238,0.15);color:#22d3ee;padding:0.1rem 0.45rem;border-radius:4px;">${f.split(' ').slice(0,3).join(' ')}</span>`
+                        ).join(' ');
+                        return `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+                            <td style="padding:0.6rem 0.75rem;font-size:0.8rem;color:#cbd5e1;">${s.stock_name}</td>
+                            <td style="padding:0.6rem 0.75rem;">${fundTags}</td>
+                            <td style="padding:0.6rem 0.75rem;font-size:0.85rem;font-weight:800;color:#10b981;text-align:right;font-family:'JetBrains Mono',monospace;">${fmt(s.monthly_rupees)}</td>
+                        </tr>`;
+                    }).join('');
+
+                    html += `<div style="background:rgba(16,185,129,0.04);border:1px solid rgba(16,185,129,0.15);border-radius:16px;overflow:hidden;margin-bottom:1rem;">
+                        <div style="padding:1.1rem 1.25rem;border-bottom:1px solid rgba(16,185,129,0.1);">
+                            <p style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:1rem;color:#ffffff;">Blended Stock Exposure</p>
+                            <p style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:#475569;margin-top:0.2rem;">Your total monthly ₹ flow into each stock across all funds</p>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table style="width:100%;border-collapse:collapse;">
+                                <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+                                    <th style="padding:0.5rem 0.75rem;font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:#475569;text-transform:uppercase;letter-spacing:0.08em;text-align:left;">Stock</th>
+                                    <th style="padding:0.5rem 0.75rem;font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:#475569;text-transform:uppercase;letter-spacing:0.08em;text-align:left;">Via Funds</th>
+                                    <th style="padding:0.5rem 0.75rem;font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:#475569;text-transform:uppercase;letter-spacing:0.08em;text-align:right;">Total /mo</th>
+                                </tr></thead>
+                                <tbody>${blendedRows}</tbody>
+                            </table>
+                        </div>
+                    </div>`;
+                }
+
+                // CTA
+                html += `<div style="text-align:center;padding:1.5rem;background:rgba(16,185,129,0.04);border:1px solid rgba(16,185,129,0.12);border-radius:16px;margin-top:0.5rem;">
+                    <p style="font-size:0.85rem;color:#64748b;margin-bottom:1rem;">Want to see overlap between these funds too? Upload your CAS for the complete picture.</p>
+                    <button onclick="document.getElementById('uploadPanel').classList.remove('hidden')" style="display:inline-flex;align-items:center;gap:0.5rem;background:#10b981;color:#050508;font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:0.82rem;letter-spacing:0.05em;text-transform:uppercase;padding:0.75rem 1.75rem;border-radius:10px;border:none;cursor:pointer;">
+                        Upload CAS → Full Report — ₹99
+                    </button>
+                </div>`;
+
+                resultsEl.innerHTML = html;
+                resultsEl.classList.remove('hidden');
+                resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            } catch(err) {
+                resultsEl.innerHTML = `<div style="background:rgba(244,63,94,0.06);border:1px solid rgba(244,63,94,0.2);border-radius:14px;padding:1.25rem;font-size:0.875rem;color:#fda4af;">Connection error — make sure the server is running.</div>`;
+                resultsEl.classList.remove('hidden');
+            } finally {
+                btn.innerHTML = `<svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg> Calculate`;
                 btn.disabled = false;
             }
         }
