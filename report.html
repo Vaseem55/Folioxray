@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Portfolio Report — FolioXRay</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: #050508; font-family: 'Inter', sans-serif; color: #ffffff; min-height: 100vh; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #050508; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
+
+        .editorial-nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 1rem 2.5rem;
+            background: rgba(6,8,18,0.82); backdrop-filter: blur(18px);
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+        }
+        .nav-logo { font-family: 'Space Grotesk', sans-serif; font-weight: 800; font-size: 1.25rem; color: #ffffff; letter-spacing: -0.02em; text-decoration: none; }
+        .nav-logo span { color: #22d3ee; }
+        .nav-back {
+            display: flex; align-items: center; gap: 0.5rem;
+            font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: 500;
+            color: rgba(255,255,255,0.6); text-decoration: none;
+            padding: 0.45rem 1rem; border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.04); transition: all 0.2s;
+        }
+        .nav-back:hover { color: #fff; border-color: rgba(255,255,255,0.2); }
+
+        .glass { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); position: relative; }
+        .glow-cyan { box-shadow: 0 0 0 1px rgba(34,211,238,0.12), 0 0 40px -10px rgba(34,211,238,0.2); }
+        .glow-violet { box-shadow: 0 0 0 1px rgba(167,139,250,0.15), 0 0 40px -10px rgba(167,139,250,0.2); }
+        .glow-rose { box-shadow: 0 0 0 1px rgba(251,113,133,0.15), 0 0 40px -10px rgba(251,113,133,0.2); }
+
+        .pulse-dot { animation: pulse 2s ease-in-out infinite; }
+        @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.35; } }
+        .scan-line { position:absolute; inset:0; border-radius:inherit; overflow:hidden; pointer-events:none; }
+        .scan-line::after {
+            content:''; position:absolute; left:0; right:0; height:1px; top:0;
+            background:linear-gradient(90deg,transparent,#22d3ee,transparent);
+            animation:scan 3.2s linear infinite; opacity:0.5;
+        }
+        @keyframes scan { 0% { top:0%; } 100% { top:100%; } }
+        .hover-lift { transition:transform .3s cubic-bezier(.22,1,.36,1); }
+        .hover-lift:hover { transform:translateY(-2px); }
+        .bar-high { background:linear-gradient(90deg,#f43f5e,#fb923c); }
+        .bar-mid  { background:linear-gradient(90deg,#f59e0b,#fbbf24); }
+        .bar-low  { background:linear-gradient(90deg,#10b981,#34d399); }
+
+        .results-wrapper { max-width: 900px; margin: 0 auto; padding: 6rem 2rem 4rem; }
+
+        .contact-bar {
+            display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap;
+            gap:1rem; padding:1.5rem 0; border-top:1px solid rgba(255,255,255,0.06); margin-top:3rem;
+        }
+        .contact-label { font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:0.85rem; color:#ffffff; margin-bottom:0.2rem; }
+        .contact-sub { font-size:0.75rem; color:#64748b; }
+        .contact-link { font-family:'JetBrains Mono',monospace; font-size:0.78rem; color:#22d3ee; text-decoration:none; border:1px solid rgba(34,211,238,0.2); padding:0.5rem 1rem; border-radius:6px; transition:all 0.2s; }
+        .contact-link:hover { background:rgba(34,211,238,0.08); }
+        .site-footer { text-align:center; font-family:'JetBrains Mono',monospace; font-size:0.65rem; color:rgba(100,116,139,0.4); letter-spacing:0.06em; padding:1.5rem 0 2rem; }
+
+        @keyframes fadeIn { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+        .fade-in { animation: fadeIn 0.4s ease forwards; }
+    </style>
+</head>
+<body>
+
+    <!-- NAV -->
+    <nav class="editorial-nav">
+        <a href="/" class="nav-logo">Folio<span>X</span>Ray</a>
+        <a href="/" class="nav-back">
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            New Analysis
+        </a>
+    </nav>
+
+    <!-- LOADING STATE -->
+    <div id="loadingState" style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.25rem;">
+        <svg class="animate-spin" style="width:36px;height:36px;color:#22d3ee;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle style="opacity:0.25;" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path style="opacity:0.75;" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <p style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:#475569;letter-spacing:0.08em;">LOADING YOUR REPORT...</p>
+    </div>
+
+    <!-- REPORT -->
+    <div id="reportPage" style="display:none;">
+        <div class="results-wrapper fade-in">
+
+            <!-- Header -->
+            <div style="padding:2rem 0 2.5rem;border-bottom:1px solid rgba(255,255,255,0.06);margin-bottom:2.5rem;">
+                <div style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;letter-spacing:0.14em;text-transform:uppercase;color:#64748b;margin-bottom:0.75rem;display:flex;align-items:center;gap:0.6rem;">
+                    <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#22d3ee;" class="pulse-dot"></span>
+                    Analysis Complete
+                </div>
+                <h2 style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:clamp(2.2rem,5vw,4rem);letter-spacing:-0.04em;color:#ffffff;line-height:1;">
+                    Your Portfolio<br><span style="color:#22d3ee;">Report.</span>
+                </h2>
+            </div>
+
+            <!-- SUMMARY METRICS -->
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-bottom:1.5rem;">
+                <div class="glass rounded-2xl" style="padding:1.75rem;border-radius:16px;overflow:hidden;position:relative;">
+                    <div style="position:absolute;top:0;right:0;width:80px;height:80px;background:rgba(16,185,129,0.08);border-radius:50%;filter:blur(20px);"></div>
+                    <p style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:#10b981;margin-bottom:0.6rem;display:flex;align-items:center;gap:0.5rem;">
+                        Total Portfolio Value
+                        <span style="display:inline-flex;align-items:center;gap:0.3rem;font-size:0.6rem;color:rgba(52,211,153,0.7);">
+                            <span style="width:5px;height:5px;border-radius:50%;background:#34d399;" class="pulse-dot"></span> LIVE
+                        </span>
+                    </p>
+                    <p style="font-family:'Space Grotesk',sans-serif;font-size:1.8rem;font-weight:800;color:#ffffff;" id="valTotal">₹0</p>
+                </div>
+                <div class="glass glow-rose" style="padding:1.75rem;border-radius:16px;overflow:hidden;position:relative;">
+                    <div style="position:absolute;top:0;right:0;width:80px;height:80px;background:rgba(244,63,94,0.08);border-radius:50%;filter:blur(20px);"></div>
+                    <p style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:#f43f5e;margin-bottom:0.6rem;">Capital in Redundant Funds</p>
+                    <p style="font-family:'Space Grotesk',sans-serif;font-size:1.8rem;font-weight:800;color:#fda4af;" id="valRedundant">—</p>
+                </div>
+                <div class="glass" style="padding:1.75rem;border-radius:16px;overflow:hidden;position:relative;">
+                    <div style="position:absolute;top:0;right:0;width:80px;height:80px;background:rgba(245,158,11,0.08);border-radius:50%;filter:blur(20px);"></div>
+                    <p style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:#f59e0b;margin-bottom:0.6rem;">Portfolio at Risk</p>
+                    <p style="font-family:'Space Grotesk',sans-serif;font-size:1.8rem;font-weight:800;color:#fcd34d;" id="valRiskPct">—</p>
+                </div>
+            </div>
+
+            <!-- PAYWALL -->
+            <div id="paywallCard" class="glass glow-cyan" style="border-radius:20px;padding:2.5rem;position:relative;overflow:hidden;margin-bottom:1.5rem;">
+                <div class="scan-line"></div>
+                <div style="position:relative;z-index:1;text-align:center;">
+                    <div style="display:inline-flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:14px;background:rgba(34,211,238,0.08);border:1px solid rgba(34,211,238,0.18);margin-bottom:1.25rem;">
+                        <svg width="26" height="26" fill="none" stroke="#22d3ee" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                    </div>
+                    <h3 style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:1.6rem;letter-spacing:-0.03em;color:#ffffff;margin-bottom:0.5rem;">Your portfolio has been scanned</h3>
+                    <p style="font-size:0.875rem;color:#64748b;margin-bottom:0.35rem;">We found <span id="fundCountLabel" style="color:#22d3ee;font-weight:700;">—</span> funds worth <span id="totalValueLabel" style="color:#ffffff;font-weight:700;">₹0</span></p>
+                    <p style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:#475569;margin-bottom:2rem;">Unlock the full overlap report to see which funds are eating into each other</p>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:0.75rem;margin-bottom:2rem;text-align:left;">
+                        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:1rem;">
+                            <p style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:#22d3ee;margin-bottom:0.4rem;">Redundancy Report</p>
+                            <p style="font-size:0.78rem;color:#64748b;">Exact funds that double-up, with ₹ at risk</p>
+                        </div>
+                        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:1rem;">
+                            <p style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:#a78bfa;margin-bottom:0.4rem;">Pair Overlap Ranking</p>
+                            <p style="font-size:0.78rem;color:#64748b;">Every fund pair ranked by common weightage %</p>
+                        </div>
+                        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:1rem;">
+                            <p style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:#10b981;margin-bottom:0.4rem;">Stock-Level Breakdown</p>
+                            <p style="font-size:0.78rem;color:#64748b;">Which stocks are held across funds and by how much</p>
+                        </div>
+                    </div>
+                    <button id="unlockBtn" onclick="startPayment()"
+                        style="display:inline-flex;align-items:center;justify-content:center;gap:0.75rem;background:#22d3ee;color:#050508;font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:1rem;letter-spacing:0.02em;text-transform:uppercase;padding:1rem 2.5rem;border-radius:10px;border:none;cursor:pointer;transition:all 0.2s;">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        Unlock Full Report — ₹99
+                    </button>
+                    <p style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:#334155;margin-top:0.75rem;letter-spacing:0.06em;">One-time payment · UPI / Cards / Netbanking · Powered by Razorpay</p>
+                </div>
+            </div>
+
+            <!-- AI ADVICE SECTION (after payment) -->
+            <div id="aiAdviceSection" class="hidden glass glow-violet" style="border-radius:20px;padding:2.25rem;position:relative;margin-bottom:1.5rem;">
+                <div style="display:flex;align-items:center;margin-bottom:0.75rem;">
+                    <div style="background:rgba(167,139,250,0.1);padding:0.6rem;border-radius:10px;margin-right:0.75rem;border:1px solid rgba(167,139,250,0.2);">
+                        <svg width="20" height="20" fill="none" stroke="#a78bfa" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                    </div>
+                    <h3 style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:1.35rem;letter-spacing:-0.03em;color:#ffffff;">Overlap Analysis — Factual Summary</h3>
+                </div>
+                <p id="aiSummary" style="font-size:0.875rem;color:#64748b;margin-bottom:1.25rem;line-height:1.65;"></p>
+                <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.18);border-radius:10px;padding:0.85rem 1rem;margin-bottom:1.75rem;display:flex;align-items:flex-start;gap:0.6rem;">
+                    <span style="color:#f59e0b;font-size:0.75rem;margin-top:2px;">&#9432;</span>
+                    <p style="font-size:0.75rem;color:rgba(253,211,77,0.75);line-height:1.6;">Holdings based on last disclosed monthly portfolio (SEBI mandates monthly disclosure — same data used by Groww, ET Money & all MF apps). For exact weightages verify on your fund house website.</p>
+                </div>
+
+                <!-- Redundancy -->
+                <div style="background:rgba(244,63,94,0.04);border:1px solid rgba(244,63,94,0.15);padding:1.25rem;border-radius:14px;margin-bottom:1.5rem;">
+                    <p style="font-family:'JetBrains Mono',monospace;font-weight:700;color:#f43f5e;text-transform:uppercase;letter-spacing:0.1em;font-size:0.65rem;margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem;">
+                        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+                        Redundant Funds Identified
+                    </p>
+                    <div id="redundancyReport" style="display:flex;flex-direction:column;gap:0.75rem;"></div>
+                </div>
+
+                <!-- Pair Overlap -->
+                <div style="margin-bottom:1.5rem;">
+                    <p style="font-family:'JetBrains Mono',monospace;font-weight:700;color:#22d3ee;text-transform:uppercase;letter-spacing:0.1em;font-size:0.65rem;margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem;">
+                        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                        Overlap Ranking — Fund Pairs by Common Weightage
+                    </p>
+                    <div id="pairOverlapContainer" style="display:flex;flex-direction:column;gap:0.75rem;"></div>
+                </div>
+
+                <!-- Stock Breakdown -->
+                <div style="margin-bottom:1.5rem;">
+                    <p style="font-family:'JetBrains Mono',monospace;font-weight:700;color:#a78bfa;text-transform:uppercase;letter-spacing:0.1em;font-size:0.65rem;margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem;">
+                        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        Common Stock Weightages Across Funds
+                    </p>
+                    <div id="aiStockDetails" style="display:flex;flex-direction:column;gap:0.75rem;"></div>
+                </div>
+
+                <!-- Alternatives -->
+                <div style="background:rgba(16,185,129,0.04);border:1px solid rgba(16,185,129,0.15);padding:1.25rem;border-radius:14px;">
+                    <p style="font-family:'JetBrains Mono',monospace;font-weight:700;color:#10b981;text-transform:uppercase;letter-spacing:0.1em;font-size:0.65rem;margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem;">
+                        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        Fund Categories With Different Mandates
+                    </p>
+                    <ul id="aiReplaceList" style="display:flex;flex-direction:column;gap:0.5rem;list-style:none;font-size:0.875rem;color:#cbd5e1;"></ul>
+                </div>
+            </div>
+
+            <!-- Holdings Table -->
+            <div class="glass" style="border-radius:20px;padding:2.25rem;margin-bottom:1.5rem;">
+                <h3 style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:1.2rem;letter-spacing:-0.02em;color:#ffffff;margin-bottom:1.5rem;">Verified Portfolio Assets</h3>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%;text-align:left;border-collapse:collapse;">
+                        <thead>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.07);">
+                                <th style="padding:0.85rem 1rem;font-family:'JetBrains Mono',monospace;font-size:0.65rem;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.1em;">Scheme Name</th>
+                                <th style="padding:0.85rem 1rem;font-family:'JetBrains Mono',monospace;font-size:0.65rem;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.1em;text-align:right;">Current Value (₹)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fundTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Contact + Footer -->
+            <div class="contact-bar">
+                <div>
+                    <div class="contact-label">Contact Us</div>
+                    <div class="contact-sub">Questions, feedback, or fund data requests? Reach out anytime.</div>
+                </div>
+                <a href="mailto:vaseemakrams55@gmail.com" class="contact-link">vaseemakrams55@gmail.com</a>
+            </div>
+            <footer class="site-footer">
+                Data processed transiently · Not stored · International equity funds excluded ·
+                <a href="/privacy" style="color:#22d3ee;text-decoration:none;">Privacy Policy</a> ·
+                <a href="/terms" style="color:#22d3ee;text-decoration:none;">Terms of Service</a><br>
+                <span style="color:rgba(100,116,139,0.5);">FolioXRay is not a SEBI-registered Investment Adviser. All output is factual portfolio analytics, not investment advice.</span>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        const SPINNER = `<svg class="animate-spin h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
+
+        let currentSessionId = null;
+        let currentTotalValue = 0;
+
+        function animateValue(el, endValue, opts) {
+            opts = opts || {};
+            const prefix = opts.prefix || '', suffix = opts.suffix || '';
+            const decimals = opts.decimals || 0, duration = opts.duration || 1000;
+            const startValue = parseFloat(el.dataset.rawValue || '0');
+            const startTime = performance.now();
+            function tick(now) {
+                const p = Math.min((now - startTime) / duration, 1);
+                const eased = 1 - Math.pow(1 - p, 3);
+                const cur = startValue + (endValue - startValue) * eased;
+                el.innerText = prefix + cur.toLocaleString('en-IN', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }) + suffix;
+                if (p < 1) requestAnimationFrame(tick);
+                else el.dataset.rawValue = String(endValue);
+            }
+            requestAnimationFrame(tick);
+        }
+
+        function renderReport(data) {
+            const totalValue = data.total_portfolio_value;
+            const advice = data.ai_advice || {};
+
+            document.getElementById('paywallCard').classList.add('hidden');
+            const sec = document.getElementById('aiAdviceSection');
+            sec.classList.remove('hidden');
+            sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            document.getElementById('aiSummary').innerText = advice.analysis_summary ||
+                'Great news! Your portfolio shows no significant stock-level overlap between equity funds.';
+
+            const redundantFunds = advice.overlapping_funds_rich || [];
+            const redundantCapital = redundantFunds.reduce((s, f) => s + f.current_value_inr, 0);
+            const riskPct = totalValue > 0 ? (redundantCapital / totalValue * 100) : 0;
+            animateValue(document.getElementById('valRedundant'), redundantCapital, { prefix: '₹', decimals: 0, duration: 1200 });
+            animateValue(document.getElementById('valRiskPct'), riskPct, { suffix: '%', decimals: 1, duration: 1200 });
+
+            document.getElementById('redundancyReport').innerHTML = redundantFunds.length > 0
+                ? redundantFunds.map(fund => {
+                    const pct = totalValue > 0 ? (fund.current_value_inr / totalValue * 100).toFixed(1) : 0;
+                    return `<div class="flex items-center justify-between p-3.5 bg-white/[0.03] rounded-xl border border-rose-500/20">
+                        <div>
+                            <p class="text-sm font-semibold text-slate-200">${fund.scheme_name}</p>
+                            <p class="text-xs text-rose-400 mt-0.5 font-mono">${pct}% of portfolio · overlaps with other domestic equity funds</p>
+                        </div>
+                        <span class="text-sm font-bold text-rose-300 font-mono ml-4 whitespace-nowrap">₹${fund.current_value_inr.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
+                    </div>`;
+                }).join('')
+                : '<p class="text-sm text-slate-500">No critically clashing funds detected.</p>';
+
+            const pairs = advice.pair_overlaps || [];
+            document.getElementById('pairOverlapContainer').innerHTML = pairs.length > 0
+                ? pairs.map((pair, idx) => {
+                    const pct = pair.overlap_percent;
+                    const barClass = pct >= 40 ? 'bar-high' : pct >= 20 ? 'bar-mid' : 'bar-low';
+                    const badge = pct >= 40
+                        ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-400 font-mono border border-rose-500/25">HIGH OVERLAP</span>`
+                        : pct >= 20
+                        ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 font-mono border border-amber-500/25">MODERATE</span>`
+                        : `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 font-mono border border-emerald-500/25">LOW</span>`;
+                    const suggestion = pct >= 40
+                        ? `<div class="mt-3 flex items-start gap-2 bg-rose-500/8 border border-rose-500/20 rounded-lg px-3 py-2"><span class="text-rose-400 text-xs mt-0.5">⚠</span><p class="text-xs text-rose-300/80 leading-relaxed"><span class="font-semibold text-rose-300">High overlap detected:</span> These two funds share ${pct}% of their stock weightage, indicating similar mandates and stock selection patterns.</p></div>`
+                        : pct >= 20
+                        ? `<div class="mt-3 flex items-start gap-2 bg-amber-500/8 border border-amber-500/20 rounded-lg px-3 py-2"><span class="text-amber-400 text-xs mt-0.5">ℹ</span><p class="text-xs text-amber-300/80 leading-relaxed"><span class="font-semibold text-amber-300">Moderate overlap:</span> A ${pct}% overlap is common between funds in the same category and reflects shared large-cap exposure.</p></div>`
+                        : `<div class="mt-3 flex items-start gap-2 bg-emerald-500/8 border border-emerald-500/20 rounded-lg px-3 py-2"><span class="text-emerald-400 text-xs mt-0.5">✓</span><p class="text-xs text-emerald-300/80 leading-relaxed"><span class="font-semibold text-emerald-300">Low overlap:</span> Under 20% shared weightage indicates these two funds invest in largely different stocks.</p></div>`;
+                    const chips = pair.common_stocks.slice(0, 4).map(s =>
+                        `<span class="inline-flex items-center gap-1 bg-white/[0.04] border border-slate-700/50 text-xs font-mono px-2 py-0.5 rounded-full text-slate-300">${s.stock_name} <span class="text-cyan-400 font-semibold">${s.overlap_contribution}%</span></span>`
+                    ).join('');
+                    return `<div class="bg-white/[0.03] border border-slate-700/50 rounded-xl p-4 hover-lift">
+                        <div class="flex items-start justify-between gap-3 mb-3 flex-wrap">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="font-mono text-xs font-bold text-slate-500">#${idx + 1}</span>
+                                <span class="text-sm font-semibold text-white">${pair.fund_a}</span>
+                                <span class="text-xs text-slate-500 font-mono">vs</span>
+                                <span class="text-sm font-semibold text-white">${pair.fund_b}</span>
+                            </div>
+                            ${badge}
+                        </div>
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="flex-1 bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                                <div class="${barClass} h-2.5 rounded-full" style="width:${Math.min(pct,100)}%"></div>
+                            </div>
+                            <span class="font-mono font-bold text-white text-sm whitespace-nowrap">${pct}%</span>
+                        </div>
+                        <p class="font-mono text-xs text-slate-500 uppercase tracking-widest mb-2">${pair.common_stocks.length} common stocks · top contributors:</p>
+                        <div class="flex flex-wrap gap-1.5">${chips || '<span class="font-mono text-xs text-slate-600">No common stocks found</span>'}</div>
+                        ${suggestion}
+                    </div>`;
+                }).join('')
+                : '<p class="text-sm text-slate-500">No pairwise overlap data available.</p>';
+
+            const stocks = advice.overlapping_stocks || [];
+            document.getElementById('aiStockDetails').innerHTML = stocks.length > 0
+                ? stocks.slice(0, 15).map(s => {
+                    const maxW = Math.max(...s.held_by.map(h => h.weight_percent));
+                    return `<div class="bg-white/[0.02] border border-slate-800 rounded-xl p-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <p class="text-sm font-semibold text-slate-200">${s.stock_name}</p>
+                            <span class="font-mono text-xs text-cyan-400 bg-cyan-400/10 px-2 py-0.5 rounded-full border border-cyan-400/20">${s.held_by.length} funds</span>
+                        </div>
+                        <div class="flex flex-col gap-1.5">
+                            ${s.held_by.map(h => `
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs text-slate-500 w-48 truncate font-mono">${h.fund_name.split(' ').slice(0,4).join(' ')}</span>
+                                    <div class="flex-1 bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                                        <div class="bar-low h-1.5 rounded-full" style="width:${(h.weight_percent/maxW*100).toFixed(1)}%"></div>
+                                    </div>
+                                    <span class="text-xs font-mono text-slate-400 w-10 text-right">${h.weight_percent}%</span>
+                                </div>`).join('')}
+                        </div>
+                    </div>`;
+                }).join('')
+                : '<p class="text-sm text-slate-500">No common stock holdings found across these funds.</p>';
+
+            const alts = advice.diversification_note || advice.suggested_replacements || [];
+            document.getElementById('aiReplaceList').innerHTML = Array.isArray(alts) && alts.length > 0
+                ? alts.map(a => `<li style="display:flex;align-items:flex-start;gap:0.5rem;"><span style="color:#10b981;flex-shrink:0;margin-top:2px;">→</span><span>${a}</span></li>`).join('')
+                : '<li style="color:#475569;font-size:0.85rem;">Portfolio appears well-diversified across fund categories.</li>';
+        }
+
+        async function startPayment() {
+            if (!currentSessionId) return;
+            const btn = document.getElementById('unlockBtn');
+            btn.innerHTML = `${SPINNER}&nbsp; Opening checkout...`;
+            btn.disabled = true;
+            try {
+                const form = new FormData();
+                form.append('session_id', currentSessionId);
+                const res = await fetch('/create-order', { method: 'POST', body: form });
+                const order = await res.json();
+                if (order.status === 'error') { alert('Order error: ' + order.message); return; }
+                const rzp = new Razorpay({
+                    key: order.key_id, amount: order.amount, currency: order.currency,
+                    name: 'FolioXRay', description: 'Portfolio Overlap Report',
+                    order_id: order.order_id, theme: { color: '#22d3ee' },
+                    prefill: { name: '', email: '', contact: '' },
+                    handler: async function(response) { await verifyAndUnlock(response, order.order_id); },
+                    modal: { ondismiss: function() {
+                        btn.innerHTML = `<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg> Unlock Full Report — ₹99`;
+                        btn.disabled = false;
+                    }}
+                });
+                rzp.open();
+            } catch(err) {
+                alert('Could not connect to payment server.');
+                btn.innerHTML = `<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg> Unlock Full Report — ₹99`;
+                btn.disabled = false;
+            }
+        }
+
+        async function verifyAndUnlock(rzpResponse, orderId) {
+            const btn = document.getElementById('unlockBtn');
+            btn.innerHTML = `${SPINNER}&nbsp; Verifying payment & building report...`;
+            btn.disabled = true;
+            try {
+                const form = new FormData();
+                form.append('razorpay_order_id', orderId);
+                form.append('razorpay_payment_id', rzpResponse.razorpay_payment_id);
+                form.append('razorpay_signature', rzpResponse.razorpay_signature);
+                form.append('session_id', currentSessionId);
+                const res = await fetch('/verify-payment', { method: 'POST', body: form });
+                const data = await res.json();
+                if (data.status === 'error') { alert('Verification failed: ' + data.message); return; }
+                renderReport(data);
+            } catch(err) {
+                alert('Report generation failed. Contact support with your payment ID: ' + rzpResponse.razorpay_payment_id);
+            }
+        }
+
+        // ——— Init: load data from sessionStorage ———
+        window.addEventListener('DOMContentLoaded', () => {
+            const raw = sessionStorage.getItem('folioxray_cas_data');
+            if (!raw) { window.location.href = '/'; return; }
+
+            let data;
+            try { data = JSON.parse(raw); } catch(e) { window.location.href = '/'; return; }
+
+            currentSessionId = data.session_id;
+            currentTotalValue = data.total_portfolio_value;
+
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('reportPage').style.display = 'block';
+
+            animateValue(document.getElementById('valTotal'), currentTotalValue, { prefix: '₹', decimals: 0, duration: 1400 });
+            document.getElementById('fundCountLabel').innerText = data.fund_count + ' funds';
+            document.getElementById('totalValueLabel').innerText = '₹' + currentTotalValue.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+
+            document.getElementById('fundTableBody').innerHTML = data.funds.map(f =>
+                `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+                    <td style="padding:0.85rem 1rem;font-size:0.875rem;color:#94a3b8;font-weight:500;">${f.scheme_name}</td>
+                    <td style="padding:0.85rem 1rem;font-size:0.875rem;color:#ffffff;font-weight:700;text-align:right;font-family:'JetBrains Mono',monospace;">₹${f.current_value_inr.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</td>
+                </tr>`
+            ).join('');
+        });
+    </script>
+</body>
+</html>

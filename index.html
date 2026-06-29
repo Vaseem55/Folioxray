@@ -1315,26 +1315,9 @@
 
                 if (data.status === 'error') { alert('Error: ' + data.message); return; }
 
-                currentSessionId = data.session_id;
-                currentTotalValue = data.total_portfolio_value;
-
-                document.getElementById('uploadContainer').style.display = 'none';
-                document.getElementById('uploadPanel').classList.add('hidden');
-                document.getElementById('heroSection').classList.add('hidden');
-                document.getElementById('resultsCard').classList.remove('hidden');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-
-                animateValue(document.getElementById('valTotal'), currentTotalValue, { prefix: '₹', decimals: 0, duration: 1400 });
-                document.getElementById('fundCountLabel').innerText = data.fund_count + ' funds';
-                document.getElementById('totalValueLabel').innerText = '₹' + currentTotalValue.toLocaleString('en-IN', { maximumFractionDigits: 0 });
-
-                // Holdings table (free)
-                document.getElementById('fundTableBody').innerHTML = data.funds.map(f =>
-                    `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
-                        <td style="padding:0.85rem 1rem;font-size:0.875rem;color:#94a3b8;font-weight:500;">${f.scheme_name}</td>
-                        <td style="padding:0.85rem 1rem;font-size:0.875rem;color:#ffffff;font-weight:700;text-align:right;font-family:'JetBrains Mono',monospace;">₹${f.current_value_inr.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</td>
-                    </tr>`
-                ).join('');
+                // Save to sessionStorage and navigate to full-page report
+                sessionStorage.setItem('folioxray_cas_data', JSON.stringify(data));
+                window.location.href = '/report';
 
             } catch (err) {
                 alert('Processing failed. Make sure your Python Uvicorn server is running.');

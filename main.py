@@ -842,6 +842,10 @@ async def serve_frontend():
     return FileResponse("index.html", media_type="text/html; charset=utf-8")
 
 
+@app.get("/report")
+async def serve_report():
+    return FileResponse("report.html", media_type="text/html; charset=utf-8")
+
 @app.get("/privacy")
 async def serve_privacy():
     return FileResponse("privacy.html", media_type="text/html; charset=utf-8")
