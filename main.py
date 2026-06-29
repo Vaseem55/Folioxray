@@ -508,6 +508,102 @@ def is_non_equity_fund(name: str) -> bool:
 # ENDPOINTS
 # =====================================================================
 
+@app.get("/compare-funds")
+async def compare_funds(funds: str):
+    """
+    Free endpoint: compare 2–5 fund names and return pairwise overlap.
+    Usage: /compare-funds?funds=hdfc+small+cap+fund,nippon+india+small+cap+fund
+    """
+    raw_names = [n.strip() for n in funds.split(",") if n.strip()]
+    if len(raw_names) < 2:
+        return JSONResponse(status_code=400, content={"error": "Provide at least 2 fund names separated by commas."})
+    if len(raw_names) > 5:
+        return JSONResponse(status_code=400, content={"error": "Maximum 5 funds per comparison."})
+
+    # Resolve each name to DB holdings
+    fund_data = {}
+    not_found = []
+    for name in raw_names:
+        holdings, matched = lookup_fund_holdings(name)
+        if holdings:
+            fund_data[matched] = holdings
+        else:
+            not_found.append(name)
+
+    if len(fund_data) < 2:
+        return JSONResponse(status_code=404, content={
+            "error": "Not enough funds found in database.",
+            "not_found": not_found,
+            "tip": "Try fund names like 'hdfc small cap fund' or 'axis bluechip fund'."
+        })
+
+    def to_weight_map(holdings):
+        result = {}
+        for h in holdings:
+            k = h.get("stock_name", "")
+            v = float(h.get("weight_percent", 0))
+            if k and v > 0:
+                result[k] = v
+        return result
+
+    fund_names = list(fund_data.keys())
+    weight_maps = {n: to_weight_map(fund_data[n]) for n in fund_names}
+
+    # Pairwise overlap
+    pair_overlaps = []
+    for i in range(len(fund_names)):
+        for j in range(i + 1, len(fund_names)):
+            na, nb = fund_names[i], fund_names[j]
+            wa, wb = weight_maps[na], weight_maps[nb]
+            common = []
+            overlap_pct = 0.0
+            for stock, w_a in wa.items():
+                if stock in wb:
+                    w_b = wb[stock]
+                    contrib = round(min(w_a, w_b), 2)
+                    overlap_pct += contrib
+                    common.append({
+                        "stock_name": stock,
+                        "weight_in_a": round(w_a, 2),
+                        "weight_in_b": round(w_b, 2),
+                        "overlap_contribution": contrib,
+                    })
+            common.sort(key=lambda x: x["overlap_contribution"], reverse=True)
+            pair_overlaps.append({
+                "fund_a": na,
+                "fund_b": nb,
+                "overlap_percent": round(overlap_pct, 1),
+                "common_stock_count": len(common),
+                "verdict": (
+                    "High overlap — consider removing one" if overlap_pct >= 40
+                    else "Moderate overlap" if overlap_pct >= 20
+                    else "Low overlap — good diversification"
+                ),
+                "top_common_stocks": common[:10],
+            })
+    pair_overlaps.sort(key=lambda x: x["overlap_percent"], reverse=True)
+
+    # Stocks held by 3+ funds (portfolio-wide concentration)
+    stock_fund_map = {}
+    for fname, wmap in weight_maps.items():
+        for stock, w in wmap.items():
+            if stock not in stock_fund_map:
+                stock_fund_map[stock] = []
+            stock_fund_map[stock].append({"fund": fname, "weight": round(w, 2)})
+    concentrated = [
+        {"stock_name": s, "held_by": len(v), "funds": v}
+        for s, v in stock_fund_map.items() if len(v) >= min(3, len(fund_names))
+    ]
+    concentrated.sort(key=lambda x: x["held_by"], reverse=True)
+
+    return JSONResponse(content={
+        "funds_compared": fund_names,
+        "not_found": not_found,
+        "pair_overlaps": pair_overlaps,
+        "stocks_held_by_multiple_funds": concentrated[:20],
+    })
+
+
 @app.get("/debug-amfi")
 async def debug_amfi():
     """Test Indian fintech app APIs for MF holdings data."""
