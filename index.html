@@ -615,7 +615,7 @@
         <div class="nav-logo">Folio<span>XRay</span></div>
         <div class="nav-links">
             <a class="nav-link" onclick="document.getElementById('uploadPanel').classList.remove('hidden')">How It Works</a>
-            <a class="nav-link" onclick="document.getElementById('uploadPanel').classList.remove('hidden')">Features</a>
+            <a class="nav-link" onclick="document.getElementById('compareSection').scrollIntoView({behavior:'smooth'})">Free Compare</a>
             <div class="nav-dropdown-wrapper">
                 <a class="nav-link" id="contactToggle" onclick="toggleContactDropdown(event)">Contact</a>
                 <div class="nav-dropdown hidden" id="contactDropdown">
@@ -680,6 +680,57 @@
             <!-- Sparkle bottom right -->
             <div class="fi fi-sparkle"      style="top:80%;right:10%;--d:3.2s;--dl:0.8s;">✦</div>
         </div>
+
+    </section>
+
+    <!-- ── COMPARE FUNDS SECTION ───────────────────────── -->
+    <section id="compareSection" style="padding:5rem 1.5rem 4rem;max-width:860px;margin:0 auto;">
+
+        <!-- Header -->
+        <div style="text-align:center;margin-bottom:2.5rem;">
+            <div style="display:inline-flex;align-items:center;gap:0.5rem;background:rgba(34,211,238,0.08);border:1px solid rgba(34,211,238,0.2);border-radius:100px;padding:0.35rem 1rem;margin-bottom:1.25rem;">
+                <span style="width:6px;height:6px;border-radius:50%;background:#22d3ee;display:inline-block;" class="pulse-dot"></span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;letter-spacing:0.14em;text-transform:uppercase;color:#22d3ee;">Free Tool</span>
+            </div>
+            <h2 style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:clamp(2rem,4vw,3rem);letter-spacing:-0.03em;color:#ffffff;line-height:1.1;margin-bottom:0.75rem;">
+                Compare Any Two Funds<br><span style="color:#22d3ee;">Instantly.</span>
+            </h2>
+            <p style="font-size:0.9rem;color:rgba(255,255,255,0.45);max-width:480px;margin:0 auto;line-height:1.7;">
+                Type any 2–5 fund names and see exact stock overlap, common holdings, and whether you're doubling up — no PDF needed.
+            </p>
+        </div>
+
+        <!-- Input card -->
+        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:2rem;margin-bottom:1.5rem;">
+
+            <div id="fundInputs" style="display:flex;flex-direction:column;gap:0.75rem;margin-bottom:1.25rem;">
+                <div class="fund-input-row" style="display:flex;gap:0.6rem;align-items:center;">
+                    <div style="width:22px;height:22px;border-radius:50%;background:rgba(34,211,238,0.12);border:1px solid rgba(34,211,238,0.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <span style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:#22d3ee;font-weight:700;">1</span>
+                    </div>
+                    <input type="text" placeholder="e.g. hdfc small cap fund" class="form-input compare-fund-input" style="flex:1;">
+                </div>
+                <div class="fund-input-row" style="display:flex;gap:0.6rem;align-items:center;">
+                    <div style="width:22px;height:22px;border-radius:50%;background:rgba(167,139,250,0.12);border:1px solid rgba(167,139,250,0.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <span style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:#a78bfa;font-weight:700;">2</span>
+                    </div>
+                    <input type="text" placeholder="e.g. nippon india small cap fund" class="form-input compare-fund-input" style="flex:1;">
+                </div>
+            </div>
+
+            <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+                <button id="addFundBtn" onclick="addFundInput()" style="display:flex;align-items:center;gap:0.4rem;background:transparent;border:1px dashed rgba(255,255,255,0.15);color:rgba(255,255,255,0.4);font-family:'Inter',sans-serif;font-size:0.78rem;padding:0.55rem 1rem;border-radius:8px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='rgba(255,255,255,0.3)';this.style.color='rgba(255,255,255,0.7)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.15)';this.style.color='rgba(255,255,255,0.4)'">
+                    <span style="font-size:1rem;line-height:1;">+</span> Add Fund
+                </button>
+                <button id="compareBtn" onclick="runComparison()" style="flex:1;min-width:160px;display:flex;align-items:center;justify-content:center;gap:0.5rem;background:#22d3ee;color:#050508;font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:0.88rem;letter-spacing:0.05em;text-transform:uppercase;padding:0.75rem 1.5rem;border-radius:10px;border:none;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='#ffffff'" onmouseout="this.style.background='#22d3ee'">
+                    <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    Compare
+                </button>
+            </div>
+        </div>
+
+        <!-- Results area -->
+        <div id="compareResults" class="hidden"></div>
 
     </section>
 
@@ -1157,6 +1208,112 @@
         document.getElementById('heroCtaBtn').addEventListener('click', () => {
             document.getElementById('uploadPanel').classList.remove('hidden');
         });
+
+        // —— Compare Funds ————————————————————————————————————————————
+        const dotColors = ['#22d3ee','#a78bfa','#10b981','#f59e0b','#f43f5e'];
+        let fundInputCount = 2;
+
+        function addFundInput() {
+            if (fundInputCount >= 5) return;
+            fundInputCount++;
+            const color = dotColors[fundInputCount - 1];
+            const row = document.createElement('div');
+            row.className = 'fund-input-row';
+            row.style.cssText = 'display:flex;gap:0.6rem;align-items:center;';
+            row.innerHTML = `
+                <div style="width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.2);border:1px solid ${color}55;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:${color};font-weight:700;">${fundInputCount}</span>
+                </div>
+                <input type="text" placeholder="e.g. axis small cap fund" class="form-input compare-fund-input" style="flex:1;">
+                <button onclick="this.parentElement.remove();fundInputCount--;" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#475569;width:28px;height:28px;border-radius:6px;cursor:pointer;flex-shrink:0;font-size:0.9rem;display:flex;align-items:center;justify-content:center;">×</button>`;
+            document.getElementById('fundInputs').appendChild(row);
+            if (fundInputCount >= 5) document.getElementById('addFundBtn').style.display = 'none';
+        }
+
+        async function runComparison() {
+            const inputs = [...document.querySelectorAll('.compare-fund-input')];
+            const names = inputs.map(i => i.value.trim()).filter(Boolean);
+            if (names.length < 2) {
+                alert('Please enter at least 2 fund names.');
+                return;
+            }
+            const btn = document.getElementById('compareBtn');
+            btn.innerHTML = `${SPINNER}&nbsp; Comparing...`;
+            btn.disabled = true;
+
+            const resultsEl = document.getElementById('compareResults');
+            resultsEl.classList.add('hidden');
+            resultsEl.innerHTML = '';
+
+            try {
+                const params = encodeURIComponent(names.join(','));
+                const res = await fetch(`/compare-funds?funds=${params}`);
+                const data = await res.json();
+
+                if (data.error) {
+                    resultsEl.innerHTML = `<div style="background:rgba(244,63,94,0.06);border:1px solid rgba(244,63,94,0.2);border-radius:14px;padding:1.25rem;font-size:0.875rem;color:#fda4af;">${data.error}${data.tip ? '<br><span style="color:#64748b;font-size:0.78rem;">'+data.tip+'</span>' : ''}</div>`;
+                    resultsEl.classList.remove('hidden');
+                    return;
+                }
+
+                let html = '';
+
+                // Not found warning
+                if (data.not_found && data.not_found.length) {
+                    html += `<div style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.2);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem;font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:#fcd34d;">
+                        ⚠ Not found in database: ${data.not_found.join(', ')}
+                    </div>`;
+                }
+
+                // Pair overlaps
+                (data.pair_overlaps || []).forEach((pair, idx) => {
+                    const pct = pair.overlap_percent;
+                    const barClass = pct >= 40 ? 'bar-high' : pct >= 20 ? 'bar-mid' : 'bar-low';
+                    const verdictColor = pct >= 40 ? '#f43f5e' : pct >= 20 ? '#f59e0b' : '#10b981';
+                    const chips = (pair.top_common_stocks || []).slice(0, 5).map(s =>
+                        `<span style="display:inline-flex;align-items:center;gap:0.3rem;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);font-family:'JetBrains Mono',monospace;font-size:0.65rem;padding:0.2rem 0.6rem;border-radius:100px;color:#cbd5e1;">${s.stock_name} <span style="color:#22d3ee;font-weight:700;">${s.overlap_contribution}%</span></span>`
+                    ).join('');
+
+                    html += `<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:1.5rem;margin-bottom:1rem;">
+                        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;">
+                            <div>
+                                <p style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:0.9rem;color:#ffffff;margin-bottom:0.2rem;">${pair.fund_a}</p>
+                                <p style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:#475569;margin-bottom:0.2rem;">vs</p>
+                                <p style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:0.9rem;color:#ffffff;">${pair.fund_b}</p>
+                            </div>
+                            <div style="text-align:right;flex-shrink:0;">
+                                <p style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:2rem;color:#ffffff;line-height:1;">${pct}%</p>
+                                <p style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:${verdictColor};text-transform:uppercase;letter-spacing:0.08em;">${pair.verdict}</p>
+                            </div>
+                        </div>
+                        <div style="background:rgba(255,255,255,0.06);border-radius:100px;height:8px;overflow:hidden;margin-bottom:1rem;">
+                            <div class="${barClass}" style="height:8px;border-radius:100px;width:${Math.min(pct,100)}%;transition:width 0.8s ease;"></div>
+                        </div>
+                        <p style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:#475569;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.6rem;">${pair.common_stock_count} common stocks · top contributors:</p>
+                        <div style="display:flex;flex-wrap:wrap;gap:0.4rem;">${chips || '<span style="font-family:JetBrains Mono,monospace;font-size:0.65rem;color:#334155;">No common stocks found</span>'}</div>
+                    </div>`;
+                });
+
+                // CTA
+                html += `<div style="text-align:center;padding:1.5rem;background:rgba(34,211,238,0.04);border:1px solid rgba(34,211,238,0.12);border-radius:16px;margin-top:0.5rem;">
+                    <p style="font-size:0.85rem;color:#64748b;margin-bottom:1rem;">Want full stock-by-stock breakdown across your <strong style="color:#ffffff;">entire portfolio</strong>?</p>
+                    <button onclick="document.getElementById('uploadPanel').classList.remove('hidden')" style="display:inline-flex;align-items:center;gap:0.5rem;background:#22d3ee;color:#050508;font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:0.82rem;letter-spacing:0.05em;text-transform:uppercase;padding:0.75rem 1.75rem;border-radius:10px;border:none;cursor:pointer;">
+                        Upload CAS PDF → Full Report — ₹99
+                    </button>
+                </div>`;
+
+                resultsEl.innerHTML = html;
+                resultsEl.classList.remove('hidden');
+                resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            } catch(err) {
+                resultsEl.innerHTML = `<div style="background:rgba(244,63,94,0.06);border:1px solid rgba(244,63,94,0.2);border-radius:14px;padding:1.25rem;font-size:0.875rem;color:#fda4af;">Connection error — make sure the server is running.</div>`;
+                resultsEl.classList.remove('hidden');
+            } finally {
+                btn.innerHTML = `<svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg> Compare`;
+                btn.disabled = false;
+            }
+        }
 
         // —— Contact dropdown ————————————————————————————————————————
         function toggleContactDropdown(e) {
