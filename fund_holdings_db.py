@@ -8954,6 +8954,60 @@ FUND_HOLDINGS = {
         {"stock_name": "HDFC Life Insurance Co Ltd", "weight_percent": 0.59},
         {"stock_name": "Wipro Ltd", "weight_percent": 0.54},
     ],
+    "parag parikh flexi cap fund": [
+        {"stock_name": "HDFC Bank Ltd", "weight_percent": 7.88},
+        {"stock_name": "Power Grid Corp Of India Ltd", "weight_percent": 6.41},
+        {"stock_name": "ITC Ltd", "weight_percent": 5.84},
+        {"stock_name": "Coal India Ltd", "weight_percent": 5.66},
+        {"stock_name": "ICICI Bank Ltd", "weight_percent": 5.11},
+        {"stock_name": "Alphabet Inc Class A", "weight_percent": 4.83},
+        {"stock_name": "Bajaj Holdings and Investment Ltd", "weight_percent": 4.48},
+        {"stock_name": "Kotak Mahindra Bank Ltd", "weight_percent": 4.12},
+        {"stock_name": "HCL Technologies Ltd", "weight_percent": 3.6},
+        {"stock_name": "Mahindra & Mahindra Ltd", "weight_percent": 3.45},
+        {"stock_name": "Infosys Ltd", "weight_percent": 3.06},
+        {"stock_name": "Axis Bank Ltd", "weight_percent": 3.02},
+        {"stock_name": "Maruti Suzuki India Ltd", "weight_percent": 2.82},
+        {"stock_name": "Bharti Airtel Ltd", "weight_percent": 2.74},
+        {"stock_name": "Tata Consultancy Services Ltd", "weight_percent": 2.54},
+        {"stock_name": "Amazon.com Inc", "weight_percent": 2.51},
+        {"stock_name": "Meta Platforms Inc Class A", "weight_percent": 2.51},
+        {"stock_name": "Microsoft Corp", "weight_percent": 2.22},
+        {"stock_name": "Zydus Lifesciences Ltd", "weight_percent": 1.47},
+        {"stock_name": "Cipla Ltd", "weight_percent": 1.39},
+        {"stock_name": "Dr Reddy's Laboratories Ltd", "weight_percent": 1.32},
+        {"stock_name": "Indraprastha Gas Ltd", "weight_percent": 1.0},
+        {"stock_name": "Zydus Wellness Ltd", "weight_percent": 0.79},
+        {"stock_name": "Indian Energy Exchange Ltd", "weight_percent": 0.75},
+        {"stock_name": "E I D Parry India Ltd", "weight_percent": 0.44},
+        {"stock_name": "Narayana Hrudayalaya Ltd", "weight_percent": 0.27},
+        {"stock_name": "Great Eastern Shipping Co Ltd", "weight_percent": 0.22},
+        {"stock_name": "Central Depository Services (India) Ltd", "weight_percent": 0.2},
+        {"stock_name": "Reliance Industries Ltd", "weight_percent": 0.19},
+        {"stock_name": "CMS Info Systems Ltd", "weight_percent": 0.16},
+        {"stock_name": "ICRA Ltd", "weight_percent": 0.11},
+        {"stock_name": "Bajaj Finance Ltd", "weight_percent": 0.1},
+        {"stock_name": "Sun Pharmaceuticals Industries Ltd", "weight_percent": 0.09},
+        {"stock_name": "Titan Co Ltd", "weight_percent": 0.08},
+        {"stock_name": "Maharashtra Scooters Ltd", "weight_percent": 0.08},
+        {"stock_name": "Mahanagar Gas Ltd", "weight_percent": 0.07},
+        {"stock_name": "Hindalco Industries Ltd", "weight_percent": 0.05},
+        {"stock_name": "Eternal Ltd", "weight_percent": 0.04},
+        {"stock_name": "Grasim Industries Ltd", "weight_percent": 0.04},
+        {"stock_name": "Oil & Natural Gas Corp Ltd", "weight_percent": 0.03},
+        {"stock_name": "Hindustan Aeronautics Ltd Ordinary Shares", "weight_percent": 0.03},
+        {"stock_name": "Indus Towers Ltd Ordinary Shares", "weight_percent": 0.03},
+        {"stock_name": "Tata Steel Ltd", "weight_percent": 0.02},
+        {"stock_name": "Bharat Electronics Ltd", "weight_percent": 0.02},
+        {"stock_name": "CIE Automotive India Ltd", "weight_percent": 0.01},
+        {"stock_name": "IndusInd Bank Ltd", "weight_percent": 0.01},
+        {"stock_name": "Swaraj Engines Ltd", "weight_percent": 0.01},
+        {"stock_name": "Nesco Ltd", "weight_percent": 0.01},
+        {"stock_name": "Eicher Motors Ltd", "weight_percent": 0.01},
+        {"stock_name": "JSW Steel Ltd", "weight_percent": 0.01},
+        {"stock_name": "DLF Ltd", "weight_percent": 0.01},
+        {"stock_name": "Bajaj Finserv Ltd", "weight_percent": 0.01},
+    ],
 }
 
 # Aliases for common name variations
@@ -9321,7 +9375,8 @@ def lookup_fund_holdings(fund_name: str):
     for alias, canonical in FUND_ALIASES.items():
         clean_alias = _clean_fund_name(alias)
         if clean_alias in name or name in clean_alias:
-            return FUND_HOLDINGS[canonical], canonical
+            if canonical in FUND_HOLDINGS:
+                return FUND_HOLDINGS[canonical], canonical
 
     # 2. Exact key match (after cleaning)
     if name in FUND_HOLDINGS:
