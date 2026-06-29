@@ -544,6 +544,11 @@ async def serve_frontend():
     return FileResponse("index.html", media_type="text/html; charset=utf-8")
 
 
+@app.get("/mobile-bg.png")
+async def serve_mobile_bg():
+    return FileResponse("mobile.png", media_type="image/png")
+
+
 @app.get("/hero-bg.png")
 async def serve_hero_bg():
     import os
