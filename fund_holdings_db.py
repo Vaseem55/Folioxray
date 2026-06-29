@@ -9317,16 +9317,24 @@ def lookup_fund_holdings(fund_name: str):
 
     name = _clean_fund_name(fund_name)
 
-    # Check aliases first (also clean alias keys)
+    # 1. Alias check
     for alias, canonical in FUND_ALIASES.items():
-        if alias in name or name in alias:
+        clean_alias = _clean_fund_name(alias)
+        if clean_alias in name or name in clean_alias:
             return FUND_HOLDINGS[canonical], canonical
 
-    # Try exact key match
+    # 2. Exact key match (after cleaning)
     if name in FUND_HOLDINGS:
         return FUND_HOLDINGS[name], name
 
-    # Fuzzy match against all keys
+    # 3. Substring check — DB key contained in CAS name or vice versa
+    for key in FUND_HOLDINGS:
+        clean_key = _clean_fund_name(key)
+        if clean_key and (clean_key in name or name in clean_key):
+            print(f"  Fund lookup '{name}' -> substring match '{key}'")
+            return FUND_HOLDINGS[key], key
+
+    # 4. Fuzzy match against all keys
     best_score = 0.0
     best_key = None
     for key in FUND_HOLDINGS:
@@ -9337,7 +9345,7 @@ def lookup_fund_holdings(fund_name: str):
             best_key = key
 
     print(f"  Fund lookup '{name}' -> best='{best_key}' score={best_score:.2f}")
-    if best_score >= 0.72:
+    if best_score >= 0.60:
         return FUND_HOLDINGS[best_key], best_key
 
     return None, None

@@ -768,6 +768,27 @@ async def compare_funds(funds: str):
     })
 
 
+@app.get("/debug-lookup")
+async def debug_lookup(funds: str):
+    """
+    Debug: check how fund names from CAS resolve against the DB.
+    Usage: /debug-lookup?funds=Bandhan Small Cap Fund - Direct Plan - Growth,HDFC Small Cap Fund Direct Growth
+    """
+    from fund_holdings_db import _clean_fund_name
+    results = []
+    for raw in funds.split("|"):
+        raw = raw.strip()
+        cleaned = _clean_fund_name(raw)
+        holdings, matched = lookup_fund_holdings(raw)
+        results.append({
+            "input": raw,
+            "cleaned": cleaned,
+            "matched_key": matched,
+            "holdings_count": len(holdings) if holdings else 0,
+        })
+    return JSONResponse(content={"results": results})
+
+
 @app.get("/debug-amfi")
 async def debug_amfi():
     """Test Indian fintech app APIs for MF holdings data."""
