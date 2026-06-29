@@ -508,6 +508,45 @@ def is_non_equity_fund(name: str) -> bool:
 # ENDPOINTS
 # =====================================================================
 
+@app.get("/sector-breakdown")
+async def sector_breakdown(fund: str):
+    """
+    Free endpoint: return sector allocation for any fund.
+    Usage: /sector-breakdown?fund=hdfc+small+cap+fund
+    """
+    from sector_map import get_sector
+
+    holdings, matched = lookup_fund_holdings(fund)
+    if not holdings:
+        return JSONResponse(status_code=404, content={
+            "error": f"Fund not found: '{fund}'",
+            "tip": "Try names like 'hdfc small cap fund' or 'axis bluechip fund'."
+        })
+
+    sectors: dict[str, float] = {}
+    for h in holdings:
+        stock = h.get("stock_name", "")
+        w = float(h.get("weight_percent", 0))
+        if not stock or w <= 0:
+            continue
+        sector = get_sector(stock)
+        sectors[sector] = round(sectors.get(sector, 0) + w, 2)
+
+    total = sum(sectors.values())
+    breakdown = sorted(
+        [{"sector": s, "weight_percent": round(w, 2), "share_of_equity": round(w / total * 100, 1) if total else 0}
+         for s, w in sectors.items()],
+        key=lambda x: x["weight_percent"], reverse=True
+    )
+
+    return JSONResponse(content={
+        "fund_name": matched,
+        "total_equity_weight": round(total, 2),
+        "sector_count": len(breakdown),
+        "breakdown": breakdown,
+    })
+
+
 @app.get("/screen-by-stock")
 async def screen_by_stock(stock: str, min_weight: float = 0.0):
     """

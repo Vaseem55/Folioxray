@@ -618,6 +618,7 @@
             <a class="nav-link" onclick="document.getElementById('compareSection').scrollIntoView({behavior:'smooth'})">Free Compare</a>
             <a class="nav-link" onclick="document.getElementById('sipSection').scrollIntoView({behavior:'smooth'})">SIP Calculator</a>
             <a class="nav-link" onclick="document.getElementById('screenerSection').scrollIntoView({behavior:'smooth'})">Fund Screener</a>
+            <a class="nav-link" onclick="document.getElementById('sectorSection').scrollIntoView({behavior:'smooth'})">Sectors</a>
             <div class="nav-dropdown-wrapper">
                 <a class="nav-link" id="contactToggle" onclick="toggleContactDropdown(event)">Contact</a>
                 <div class="nav-dropdown hidden" id="contactDropdown">
@@ -880,6 +881,62 @@
             background: rgba(167,139,250,0.16);
             border-color: rgba(167,139,250,0.4);
         }
+    </style>
+
+    <!-- ── SECTOR BREAKDOWN SECTION ────────────────────── -->
+    <section id="sectorSection" style="padding:2rem 1.5rem 5rem;max-width:860px;margin:0 auto;">
+
+        <div style="border-top:1px solid rgba(255,255,255,0.06);margin-bottom:4rem;"></div>
+
+        <div style="text-align:center;margin-bottom:2.5rem;">
+            <div style="display:inline-flex;align-items:center;gap:0.5rem;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);border-radius:100px;padding:0.35rem 1rem;margin-bottom:1.25rem;">
+                <span style="width:6px;height:6px;border-radius:50%;background:#fbbf24;display:inline-block;" class="pulse-dot"></span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;letter-spacing:0.14em;text-transform:uppercase;color:#fbbf24;">Free Tool</span>
+            </div>
+            <h2 style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:clamp(2rem,4vw,3rem);letter-spacing:-0.03em;color:#ffffff;line-height:1.1;margin-bottom:0.75rem;">
+                Sector Breakdown<br><span style="color:#fbbf24;">of Any Fund.</span>
+            </h2>
+            <p style="font-size:0.9rem;color:rgba(255,255,255,0.45);max-width:500px;margin:0 auto;line-height:1.7;">
+                See exactly how much of a fund is in Banking, IT, Pharma, Auto and more — before you invest.
+            </p>
+        </div>
+
+        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:2rem;margin-bottom:1.5rem;">
+            <label class="form-label">Fund Name</label>
+            <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:1rem;">
+                <input type="text" id="sectorFundInput" placeholder="e.g. hdfc small cap fund" class="form-input" style="flex:1;min-width:200px;" onkeydown="if(event.key==='Enter') runSectorBreakdown()">
+                <button id="sectorBtn" onclick="runSectorBreakdown()" style="display:flex;align-items:center;gap:0.5rem;background:#fbbf24;color:#050508;font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:0.88rem;letter-spacing:0.05em;text-transform:uppercase;padding:0.75rem 1.5rem;border-radius:10px;border:none;cursor:pointer;white-space:nowrap;transition:all 0.2s;" onmouseover="this.style.background='#fde68a'" onmouseout="this.style.background='#fbbf24'">
+                    <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/></svg>
+                    Analyse
+                </button>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:0.4rem;">
+                <button onclick="quickSector('hdfc small cap fund')" class="sector-chip">HDFC Small Cap</button>
+                <button onclick="quickSector('nippon india small cap fund')" class="sector-chip">Nippon Small Cap</button>
+                <button onclick="quickSector('axis bluechip fund')" class="sector-chip">Axis Bluechip</button>
+                <button onclick="quickSector('parag parikh flexi cap fund')" class="sector-chip">Parag Parikh Flexi Cap</button>
+                <button onclick="quickSector('quant small cap fund')" class="sector-chip">Quant Small Cap</button>
+                <button onclick="quickSector('sbi small cap fund')" class="sector-chip">SBI Small Cap</button>
+            </div>
+        </div>
+
+        <div id="sectorResults" class="hidden"></div>
+
+    </section>
+
+    <style>
+        .sector-chip {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.3rem 0.75rem;
+            border-radius: 100px;
+            background: rgba(251,191,36,0.07);
+            border: 1px solid rgba(251,191,36,0.18);
+            color: #fbbf24;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .sector-chip:hover { background: rgba(251,191,36,0.16); border-color: rgba(251,191,36,0.4); }
     </style>
 
     <!-- ── UPLOAD PANEL (overlay) ────────────────────── -->
@@ -1705,6 +1762,138 @@
                 if (e.key === 'Enter') runScreener();
             });
         });
+
+        // —— Sector Breakdown ————————————————————————————————————————
+        const SECTOR_COLORS = {
+            "Banking & Finance":            "#22d3ee",
+            "IT & Technology":              "#a78bfa",
+            "Pharma & Healthcare":          "#34d399",
+            "Oil, Gas & Energy":            "#fb923c",
+            "Power & Utilities":            "#fbbf24",
+            "Automobile & Auto Ancillaries":"#f472b6",
+            "Capital Goods":                "#60a5fa",
+            "Cement & Construction":        "#a3e635",
+            "Metals & Mining":              "#94a3b8",
+            "Chemicals":                    "#e879f9",
+            "Consumer Staples":             "#4ade80",
+            "Consumer Discretionary":       "#f87171",
+            "Telecom":                      "#38bdf8",
+            "Logistics & Transport":        "#fb7185",
+            "Media & Entertainment":        "#c084fc",
+            "Agriculture":                  "#86efac",
+            "Hospitality":                  "#fdba74",
+            "Diversified":                  "#64748b",
+            "Textiles":                     "#fcd34d",
+            "Others":                       "#334155",
+        };
+
+        function quickSector(name) {
+            document.getElementById('sectorFundInput').value = name;
+            runSectorBreakdown();
+        }
+
+        async function runSectorBreakdown() {
+            const fund = document.getElementById('sectorFundInput').value.trim();
+            if (!fund) { alert('Enter a fund name.'); return; }
+
+            const btn = document.getElementById('sectorBtn');
+            btn.innerHTML = `${SPINNER}&nbsp; Analysing...`;
+            btn.disabled = true;
+
+            const resultsEl = document.getElementById('sectorResults');
+            resultsEl.classList.add('hidden');
+            resultsEl.innerHTML = '';
+
+            try {
+                const res = await fetch(`/sector-breakdown?fund=${encodeURIComponent(fund)}`);
+                const data = await res.json();
+
+                if (data.error) {
+                    resultsEl.innerHTML = `<div style="background:rgba(244,63,94,0.06);border:1px solid rgba(244,63,94,0.2);border-radius:14px;padding:1.25rem;font-size:0.875rem;color:#fda4af;">${data.error}${data.tip ? '<br><span style="color:#64748b;font-size:0.78rem;">'+data.tip+'</span>' : ''}</div>`;
+                    resultsEl.classList.remove('hidden');
+                    return;
+                }
+
+                const bd = data.breakdown;
+                const maxW = bd.length ? bd[0].weight_percent : 1;
+
+                // Build donut SVG
+                const total = bd.reduce((s, x) => s + x.share_of_equity, 0);
+                let donutPaths = '';
+                let cumulativePct = 0;
+                const r = 80, cx = 100, cy = 100, strokeW = 28;
+                const circumference = 2 * Math.PI * r;
+                bd.forEach((item, i) => {
+                    const pct = item.share_of_equity / 100;
+                    const color = SECTOR_COLORS[item.sector] || '#334155';
+                    const dashArray = `${pct * circumference} ${circumference}`;
+                    const rotate = cumulativePct * 360 - 90;
+                    donutPaths += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="${strokeW}" stroke-dasharray="${dashArray}" stroke-dashoffset="0" transform="rotate(${rotate} ${cx} ${cy})" style="transition:stroke-dasharray 0.6s ease;"/>`;
+                    cumulativePct += pct;
+                });
+
+                let html = `<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:20px;overflow:hidden;margin-bottom:1rem;">
+                    <div style="padding:1.25rem 1.5rem;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;">
+                        <div>
+                            <p style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:1rem;color:#ffffff;">${data.fund_name}</p>
+                            <p style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:#475569;margin-top:0.2rem;text-transform:uppercase;letter-spacing:0.08em;">${data.sector_count} sectors · ${data.total_equity_weight}% equity weight</p>
+                        </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:200px 1fr;gap:0;align-items:start;">
+                        <!-- Donut -->
+                        <div style="padding:1.5rem;display:flex;align-items:center;justify-content:center;">
+                            <svg viewBox="0 0 200 200" width="160" height="160">
+                                <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="${strokeW}"/>
+                                ${donutPaths}
+                                <text x="${cx}" y="${cy - 8}" text-anchor="middle" fill="#ffffff" font-family="Space Grotesk,sans-serif" font-weight="800" font-size="22">${bd.length > 0 ? bd[0].share_of_equity : 0}%</text>
+                                <text x="${cx}" y="${cy + 12}" text-anchor="middle" fill="#64748b" font-family="JetBrains Mono,monospace" font-size="8">${(bd[0]?.sector || '').split(' ')[0].toUpperCase()}</text>
+                            </svg>
+                        </div>
+                        <!-- Bars -->
+                        <div style="padding:1.25rem 1.25rem 1.25rem 0;display:flex;flex-direction:column;gap:0.55rem;">
+                            ${bd.map(item => {
+                                const color = SECTOR_COLORS[item.sector] || '#334155';
+                                const barW = maxW > 0 ? (item.weight_percent / maxW * 100).toFixed(1) : 0;
+                                return `<div>
+                                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.3rem;">
+                                        <div style="display:flex;align-items:center;gap:0.4rem;">
+                                            <span style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0;"></span>
+                                            <span style="font-size:0.78rem;color:#cbd5e1;font-weight:500;">${item.sector}</span>
+                                        </div>
+                                        <div style="display:flex;gap:0.75rem;align-items:center;">
+                                            <span style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:#64748b;">${item.weight_percent}%</span>
+                                            <span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:0.82rem;color:${color};min-width:38px;text-align:right;">${item.share_of_equity}%</span>
+                                        </div>
+                                    </div>
+                                    <div style="background:rgba(255,255,255,0.06);border-radius:100px;height:5px;overflow:hidden;">
+                                        <div style="background:${color};height:5px;border-radius:100px;width:${barW}%;opacity:0.85;"></div>
+                                    </div>
+                                </div>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                </div>`;
+
+                // CTA
+                html += `<div style="text-align:center;padding:1.5rem;background:rgba(251,191,36,0.04);border:1px solid rgba(251,191,36,0.12);border-radius:16px;">
+                    <p style="font-size:0.85rem;color:#64748b;margin-bottom:1rem;">See sector overlap across your <strong style="color:#ffffff;">entire portfolio</strong> in the full report.</p>
+                    <button onclick="document.getElementById('uploadPanel').classList.remove('hidden')" style="display:inline-flex;align-items:center;gap:0.5rem;background:#fbbf24;color:#050508;font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:0.82rem;letter-spacing:0.05em;text-transform:uppercase;padding:0.75rem 1.75rem;border-radius:10px;border:none;cursor:pointer;">
+                        Upload CAS → Full Report — ₹99
+                    </button>
+                </div>`;
+
+                resultsEl.innerHTML = html;
+                resultsEl.classList.remove('hidden');
+                resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            } catch(err) {
+                resultsEl.innerHTML = `<div style="background:rgba(244,63,94,0.06);border:1px solid rgba(244,63,94,0.2);border-radius:14px;padding:1.25rem;font-size:0.875rem;color:#fda4af;">Connection error.</div>`;
+                resultsEl.classList.remove('hidden');
+            } finally {
+                btn.innerHTML = `<svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/></svg> Analyse`;
+                btn.disabled = false;
+            }
+        }
 
         // —— Contact dropdown ————————————————————————————————————————
         function toggleContactDropdown(e) {
