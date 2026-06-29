@@ -298,6 +298,24 @@ async def build_full_report(domestic_portfolio: list) -> dict:
 
     fund_holdings_map = {name: h for name, h in zip(all_names, holdings_list)}
 
+    # Deduplicate: if two CAS fund names resolved to the same DB key (wrong fuzzy match),
+    # clear the one that is less likely to be correct (shorter name match = worse match).
+    # Track which DB keys have already been claimed.
+    _claimed_db_keys: dict[str, str] = {}  # db_key -> first CAS name that claimed it
+    for cas_name, holdings in fund_holdings_map.items():
+        if not holdings:
+            continue
+        # Find which DB key this resolved to
+        _, matched_key = lookup_fund_holdings(cas_name)
+        if matched_key is None:
+            continue
+        if matched_key in _claimed_db_keys:
+            # Another CAS fund already owns this DB key — this is a wrong fuzzy match
+            print(f"  Dedup: '{cas_name}' wrongly matched to '{matched_key}' (already claimed by '{_claimed_db_keys[matched_key]}')")
+            fund_holdings_map[cas_name] = []
+        else:
+            _claimed_db_keys[matched_key] = cas_name
+
     overlapping_stocks_master = {}
     mapped_overlapping_funds = []
 
