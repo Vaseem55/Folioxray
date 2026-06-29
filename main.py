@@ -913,6 +913,36 @@ async def audit_cas_pdf(
 
         domestic_portfolio = [f for f in portfolio_summary if not is_international_fund(f["scheme_name"])]
 
+        # Compute lightweight teaser data (overlap %, redundant ₹) for the paywall preview
+        preview_pairs = []
+        preview_redundant = []
+        try:
+            equity_names = [f["scheme_name"] for f in domestic_portfolio
+                            if not is_non_equity_fund(f["scheme_name"])]
+            holdings_map = {}
+            for name in equity_names:
+                h, _ = lookup_fund_holdings(name)
+                if h:
+                    holdings_map[name] = {entry["stock_name"]: entry["weight_percent"] for entry in h}
+
+            REDUNDANT_THRESHOLD = 10.0
+            redundant_names = set()
+            fund_list = list(holdings_map.keys())
+            for i in range(len(fund_list)):
+                for j in range(i + 1, len(fund_list)):
+                    a, b = fund_list[i], fund_list[j]
+                    ha, hb = holdings_map[a], holdings_map[b]
+                    overlap = sum(min(ha[s], hb[s]) for s in ha if s in hb)
+                    preview_pairs.append({"fund_a": a, "fund_b": b, "overlap_percent": round(overlap, 1)})
+                    if overlap >= REDUNDANT_THRESHOLD:
+                        redundant_names.add(a)
+                        redundant_names.add(b)
+
+            preview_pairs.sort(key=lambda x: x["overlap_percent"], reverse=True)
+            preview_redundant = [f for f in domestic_portfolio if f["scheme_name"] in redundant_names]
+        except Exception:
+            pass
+
         # Store parsed data for use after payment
         session_id = str(uuid.uuid4())
         pending_sessions[session_id] = {
@@ -927,6 +957,8 @@ async def audit_cas_pdf(
             "total_portfolio_value": round(total_portfolio_value, 2),
             "fund_count": len(portfolio_summary),
             "funds": portfolio_summary,
+            "preview_pairs": preview_pairs,
+            "preview_redundant": preview_redundant,
         })
 
     except Exception as e:

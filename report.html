@@ -138,7 +138,28 @@
                     </div>
                     <h3 style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:1.6rem;letter-spacing:-0.03em;color:#ffffff;margin-bottom:0.5rem;">Your portfolio has been scanned</h3>
                     <p style="font-size:0.875rem;color:#64748b;margin-bottom:0.35rem;">We found <span id="fundCountLabel" style="color:#22d3ee;font-weight:700;">—</span> funds worth <span id="totalValueLabel" style="color:#ffffff;font-weight:700;">₹0</span></p>
-                    <p style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:#475569;margin-bottom:2rem;">Unlock the full overlap report to see which funds are eating into each other</p>
+                    <p style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:#475569;margin-bottom:1.5rem;">Unlock the full overlap report to see which funds are eating into each other</p>
+
+                    <!-- TEASER STATS (blurred) -->
+                    <div id="teaserStats" style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1.75rem;">
+                        <div style="background:rgba(244,63,94,0.06);border:1px solid rgba(244,63,94,0.2);border-radius:14px;padding:1.1rem 1.25rem;text-align:left;position:relative;overflow:hidden;">
+                            <p style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;color:#f43f5e;margin-bottom:0.5rem;display:flex;align-items:center;gap:0.4rem;">
+                                <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+                                Highest Overlap Found
+                            </p>
+                            <p style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:2rem;color:#fda4af;line-height:1;filter:blur(7px);user-select:none;" id="teaserOverlapPct">??%</p>
+                            <p style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:#64748b;margin-top:0.3rem;">between 2 of your funds</p>
+                        </div>
+                        <div style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.2);border-radius:14px;padding:1.1rem 1.25rem;text-align:left;position:relative;overflow:hidden;">
+                            <p style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;color:#f59e0b;margin-bottom:0.5rem;display:flex;align-items:center;gap:0.4rem;">
+                                <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                Capital at Risk
+                            </p>
+                            <p style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:2rem;color:#fcd34d;line-height:1;filter:blur(7px);user-select:none;" id="teaserRiskAmt">₹X,XX,XXX</p>
+                            <p style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:#64748b;margin-top:0.3rem;">sitting in redundant funds</p>
+                        </div>
+                    </div>
+
                     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:0.75rem;margin-bottom:2rem;text-align:left;">
                         <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:1rem;">
                             <p style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:#22d3ee;margin-bottom:0.4rem;">Redundancy Report</p>
@@ -443,6 +464,18 @@
                     <td style="padding:0.85rem 1rem;font-size:0.875rem;color:#ffffff;font-weight:700;text-align:right;font-family:'JetBrains Mono',monospace;">₹${f.current_value_inr.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</td>
                 </tr>`
             ).join('');
+
+            // Teaser stats — compute from free data
+            const pairs = data.preview_pairs || [];
+            const maxOverlap = pairs.length > 0 ? Math.max(...pairs.map(p => p.overlap_percent)) : null;
+            if (maxOverlap !== null) {
+                document.getElementById('teaserOverlapPct').innerText = maxOverlap.toFixed(1) + '%';
+            }
+            const redundantFunds = data.preview_redundant || [];
+            const riskAmt = redundantFunds.reduce((s, f) => s + (f.current_value_inr || 0), 0);
+            if (riskAmt > 0) {
+                document.getElementById('teaserRiskAmt').innerText = '₹' + riskAmt.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+            }
         });
     </script>
 </body>
