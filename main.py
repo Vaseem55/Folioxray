@@ -544,6 +544,16 @@ async def serve_frontend():
     return FileResponse("index.html", media_type="text/html; charset=utf-8")
 
 
+@app.get("/hero-bg.png")
+async def serve_hero_bg():
+    import os
+    for name in os.listdir("."):
+        if name.lower().endswith((".png", ".jpg", ".webp")) and ("gemini" in name.lower() or "hero" in name.lower()):
+            mt = "image/png" if name.endswith(".png") else "image/jpeg"
+            return FileResponse(name, media_type=mt)
+    return FileResponse("Gemini_Generated_Image_kejhm7kejhm7kejh.png", media_type="image/png")
+
+
 @app.post("/audit-cas")
 async def audit_cas_pdf(
     password: str = Form(...),
