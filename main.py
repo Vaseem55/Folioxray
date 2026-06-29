@@ -238,21 +238,22 @@ async def fetch_live_market_holdings(fund_name: str) -> list:
 
 async def analyze_portfolio_categories(portfolio_data: list) -> dict:
     prompt = f"""
-    You are a SEBI-registered portfolio manager.
+    You are a mutual fund data analyst providing factual portfolio observations (NOT investment advice).
     Review these mutual funds: {json.dumps(portfolio_data)}.
 
     CRITICAL RULES:
     1. DO NOT GUESS STOCKS OR WEIGHTS.
-    2. Identify 2 or 3 specific DOMESTIC EQUITY mutual funds that genuinely clash because they share the same category/sector mandate.
+    2. Identify 2 or 3 specific DOMESTIC EQUITY mutual funds that share the same category/sector mandate based on their names.
     3. COMPLETELY IGNORE any fund that invests internationally or in overseas/foreign equities (e.g. funds with words like "International", "Overseas", "Global", "US", "World", "Nasdaq", "S&P 500", "NYSE", "FOF" investing abroad).
     4. Return ONLY their exact names in the 'overlapping_funds' array.
+    5. Use ONLY factual, descriptive language. Do NOT say "consider", "should", "recommend", "exit", "sell", "buy". Describe what IS, not what to do.
 
     Respond with ONLY this JSON schema:
     {{
       "overlap_detected": true,
-      "analysis_summary": "A sharp, 2-sentence breakdown explaining why these categories overlap.",
+      "analysis_summary": "A factual 2-sentence observation describing why these fund categories share mandates. No advice — only facts.",
       "overlapping_funds": ["Exact scheme_name 1", "Exact scheme_name 2"],
-      "suggested_replacements": ["Suggested Category to diversify into"]
+      "diversification_note": ["Fund category that invests in different mandates — e.g. Mid Cap, International Equity, Debt"]
     }}
     """
     try:
@@ -266,7 +267,11 @@ async def analyze_portfolio_categories(portfolio_data: list) -> dict:
             temperature=0.0,
             seed=42
         )
-        return json.loads(response.choices[0].message.content)
+        result = json.loads(response.choices[0].message.content)
+        # Normalise field name regardless of what AI returns
+        if "suggested_replacements" in result and "diversification_note" not in result:
+            result["diversification_note"] = result.pop("suggested_replacements")
+        return result
     except Exception as e:
         print(f"OpenAI Execution Error: {e}")
         return {"overlap_detected": False, "overlapping_funds": []}
@@ -799,6 +804,14 @@ async def serve_frontend():
     return FileResponse("index.html", media_type="text/html; charset=utf-8")
 
 
+@app.get("/privacy")
+async def serve_privacy():
+    return FileResponse("privacy.html", media_type="text/html; charset=utf-8")
+
+@app.get("/terms")
+async def serve_terms():
+    return FileResponse("terms.html", media_type="text/html; charset=utf-8")
+
 @app.get("/mobile-bg.png")
 async def serve_mobile_bg():
     return FileResponse("mobile.png", media_type="image/png")
@@ -824,13 +837,17 @@ async def audit_cas_pdf(
     Full overlap analysis is locked behind payment.
     """
     try:
+        tmp_path = None
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
             tmp.write(await cas_file.read())
             tmp_path = tmp.name
 
         json_str = casparser.read_cas_pdf(tmp_path, password, output="json")
         parsed_data = json.loads(json_str)
-        os.unlink(tmp_path)
+        try:
+            os.unlink(tmp_path)
+        except Exception:
+            pass
 
         portfolio_summary = []
         fund_names_seen = []

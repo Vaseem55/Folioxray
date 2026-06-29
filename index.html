@@ -1079,7 +1079,7 @@
                     <div style="background:rgba(167,139,250,0.1);padding:0.6rem;border-radius:10px;margin-right:0.75rem;border:1px solid rgba(167,139,250,0.2);">
                         <svg width="20" height="20" fill="none" stroke="#a78bfa" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
                     </div>
-                    <h3 style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:1.35rem;letter-spacing:-0.03em;color:#ffffff;">Overlap Analysis Report</h3>
+                    <h3 style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:1.35rem;letter-spacing:-0.03em;color:#ffffff;">Overlap Analysis — Factual Summary</h3>
                 </div>
                 <p id="aiSummary" style="font-size:0.875rem;color:#64748b;margin-bottom:1.25rem;line-height:1.65;"></p>
                 <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.18);border-radius:10px;padding:0.85rem 1rem;margin-bottom:1.75rem;display:flex;align-items:flex-start;gap:0.6rem;">
@@ -1118,7 +1118,7 @@
                 <div style="background:rgba(16,185,129,0.04);border:1px solid rgba(16,185,129,0.15);padding:1.25rem;border-radius:14px;">
                     <p style="font-family:'JetBrains Mono',monospace;font-weight:700;color:#10b981;text-transform:uppercase;letter-spacing:0.1em;font-size:0.65rem;margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem;">
                         <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        Recommended Alternatives
+                        Fund Categories With Different Mandates
                     </p>
                     <ul id="aiReplaceList" style="display:flex;flex-direction:column;gap:0.5rem;list-style:none;font-size:0.875rem;color:#cbd5e1;"></ul>
                 </div>
@@ -1152,7 +1152,10 @@
             </div>
 
             <footer class="site-footer">
-                Data processed transiently · Not stored · International equity funds excluded · Not investment advice
+                Data processed transiently · Not stored · International equity funds excluded ·
+                <a href="/privacy" style="color:#22d3ee;text-decoration:none;">Privacy Policy</a> ·
+                <a href="/terms" style="color:#22d3ee;text-decoration:none;">Terms of Service</a><br>
+                <span style="color:rgba(100,116,139,0.5);">FolioXRay is not a SEBI-registered Investment Adviser. All output is factual portfolio analytics, not investment advice.</span>
             </footer>
 
         </div>
@@ -1228,16 +1231,16 @@
                     const suggestion = pct >= 40
                         ? `<div class="mt-3 flex items-start gap-2 bg-rose-500/8 border border-rose-500/20 rounded-lg px-3 py-2">
                              <span class="text-rose-400 text-xs mt-0.5">⚠</span>
-                             <p class="text-xs text-rose-300/80 leading-relaxed"><span class="font-semibold text-rose-300">Suggestion:</span> These two funds are heavily redundant — holding both gives you little extra diversification. Consider exiting the smaller holding and consolidating into one fund.</p>
+                             <p class="text-xs text-rose-300/80 leading-relaxed"><span class="font-semibold text-rose-300">High overlap detected:</span> These two funds share ${pct}% of their stock weightage, indicating similar mandates and stock selection patterns.</p>
                            </div>`
                         : pct >= 20
                         ? `<div class="mt-3 flex items-start gap-2 bg-amber-500/8 border border-amber-500/20 rounded-lg px-3 py-2">
                              <span class="text-amber-400 text-xs mt-0.5">ℹ</span>
-                             <p class="text-xs text-amber-300/80 leading-relaxed"><span class="font-semibold text-amber-300">Note:</span> 20–39% overlap is common between funds of the same category (e.g. two flexi cap funds). Monitor if both funds keep growing in your portfolio — beyond a point the overlap stops adding value.</p>
+                             <p class="text-xs text-amber-300/80 leading-relaxed"><span class="font-semibold text-amber-300">Moderate overlap:</span> A ${pct}% overlap is common between funds in the same category (e.g. two flexi cap funds) and reflects shared large-cap exposure.</p>
                            </div>`
                         : `<div class="mt-3 flex items-start gap-2 bg-emerald-500/8 border border-emerald-500/20 rounded-lg px-3 py-2">
                              <span class="text-emerald-400 text-xs mt-0.5">✓</span>
-                             <p class="text-xs text-emerald-300/80 leading-relaxed"><span class="font-semibold text-emerald-300">Good diversification:</span> Under 20% overlap means these two funds invest in largely different stocks — they complement each other well.</p>
+                             <p class="text-xs text-emerald-300/80 leading-relaxed"><span class="font-semibold text-emerald-300">Low overlap:</span> Under 20% shared weightage indicates these two funds invest in largely different stocks.</p>
                            </div>`;
                     const chips = pair.common_stocks.slice(0, 4).map(s =>
                         `<span class="inline-flex items-center gap-1 bg-white/[0.04] border border-slate-700/50 text-xs font-mono px-2 py-0.5 rounded-full text-slate-300">${s.stock_name} <span class="text-cyan-400 font-semibold">${s.overlap_contribution}%</span></span>`
@@ -1289,9 +1292,9 @@
                 }).join('')
                 : '<div class="bg-white/[0.03] border border-slate-700/50 p-4 text-center text-sm text-slate-500 rounded-xl font-mono">No common stock holdings found across these funds.</div>';
 
-            // Section 4 — Alternatives
-            document.getElementById('aiReplaceList').innerHTML = (advice.suggested_replacements || []).map(f =>
-                `<li class="flex items-start text-sm font-semibold text-slate-300"><span class="text-emerald-400 font-bold mr-2 text-base leading-none mt-0.5">✓</span><span>${f}</span></li>`
+            // Section 4 — Diversification note
+            document.getElementById('aiReplaceList').innerHTML = (advice.diversification_note || advice.suggested_replacements || []).map(f =>
+                `<li class="flex items-start text-sm font-semibold text-slate-300"><span class="text-emerald-400 font-bold mr-2 text-base leading-none mt-0.5">→</span><span>${f}</span></li>`
             ).join('');
         }
 
