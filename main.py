@@ -498,10 +498,9 @@ NON_EQUITY_KEYWORDS = [
     "liquid", "overnight", "money market", "ultra short", "low duration",
     "short duration", "medium duration", "long duration", "gilt", "g-sec",
     "debt", "bond", "banking and psu", "corporate bond", "credit risk",
-    "floater", "arbitrage", "gold", "silver", "commodity", "etf",
-    "nifty 50", "nifty50", "nifty next 50", "sensex", "index fund",
-    "nifty 100", "nifty 500", "bse", "capital market index", "balanced advantage",
-    "dynamic asset", "multi asset", "hybrid", "conservative",
+    "floater", "arbitrage", "gold", "silver", "commodity",
+    "balanced advantage", "dynamic asset", "multi asset", "hybrid", "conservative",
+    # Note: index funds (nifty 50, nifty next 50, etc.) are EQUITY — do NOT exclude them
 ]
 
 def is_non_equity_fund(name: str) -> bool:
