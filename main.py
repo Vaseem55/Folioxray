@@ -874,6 +874,16 @@ async def serve_hero_video():
     return FileResponse("hero-video.mp4", media_type="video/mp4")
 
 
+@app.get("/howitworks-video.mp4")
+async def serve_howitworks_video():
+    return FileResponse("howitworks-video.mp4", media_type="video/mp4")
+
+
+@app.get("/sector-video.mp4")
+async def serve_sector_video():
+    return FileResponse("sector-video.mp4", media_type="video/mp4")
+
+
 @app.post("/audit-cas")
 async def audit_cas_pdf(
     password: str = Form(...),

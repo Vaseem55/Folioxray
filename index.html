@@ -187,6 +187,27 @@
             background: rgba(255,255,255,0.025);
         }
 
+        /* ── VIDEO-BACKED SECTIONS ───────────────────────── */
+        .video-section {
+            position: relative;
+            overflow: hidden;
+            padding: 5rem 1.5rem 4.5rem;
+        }
+        .video-section-bg {
+            position: absolute; inset: 0;
+            width: 100%; height: 100%;
+            object-fit: cover; object-position: center center;
+            z-index: 0;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+        }
+        .video-section-bg.is-playing { opacity: 1; }
+        .video-section-overlay {
+            position: absolute; inset: 0; z-index: 1; pointer-events: none;
+            background: linear-gradient(180deg, rgba(5,5,8,0.88) 0%, rgba(5,5,8,0.82) 50%, rgba(5,5,8,0.92) 100%);
+        }
+        .video-section-content { position: relative; z-index: 2; }
+
         /* ── UPLOAD PANEL ───────────────────────────────── */
         .upload-overlay {
             position: fixed;
@@ -636,7 +657,10 @@
     </section>
 
     <!-- ── HOW IT WORKS ─────────────────────────────────── -->
-    <section id="howItWorksSection" style="padding:5rem 1.5rem 4.5rem;max-width:980px;margin:0 auto;">
+    <section id="howItWorksSection" class="video-section">
+        <video class="video-section-bg" data-src="/howitworks-video.mp4" muted loop playsinline preload="none"></video>
+        <div class="video-section-overlay"></div>
+        <div class="video-section-content" style="max-width:980px;margin:0 auto;">
         <div class="reveal" style="text-align:center;margin-bottom:3rem;">
             <h2 style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:clamp(1.7rem,3.4vw,2.4rem);letter-spacing:-0.03em;color:#ffffff;margin-bottom:0.6rem;">How it works</h2>
             <p style="font-size:0.9rem;color:rgba(255,255,255,0.45);max-width:440px;margin:0 auto;">Three steps from CAS PDF to a complete overlap report.</p>
@@ -657,6 +681,7 @@
                 <h3 style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1rem;color:#ffffff;margin-bottom:0.5rem;">Unlock the report</h3>
                 <p style="font-size:0.85rem;color:#64748b;line-height:1.65;">See redundant funds, pair overlap rankings and stock-level weightages for ₹99, one time.</p>
             </div>
+        </div>
         </div>
     </section>
 
@@ -858,7 +883,10 @@
     </style>
 
     <!-- ── SECTOR BREAKDOWN SECTION ────────────────────── -->
-    <section id="sectorSection" style="padding:2rem 1.5rem 5rem;max-width:860px;margin:0 auto;">
+    <section id="sectorSection" class="video-section">
+        <video class="video-section-bg" data-src="/sector-video.mp4" muted loop playsinline preload="none"></video>
+        <div class="video-section-overlay"></div>
+        <div class="video-section-content" style="max-width:860px;margin:0 auto;">
 
         <div style="border-top:1px solid rgba(255,255,255,0.06);margin-bottom:4rem;"></div>
 
@@ -896,6 +924,7 @@
 
         <div id="sectorResults" class="hidden"></div>
 
+        </div>
     </section>
 
     <style>
@@ -1968,6 +1997,22 @@
         document.addEventListener('click', () => {
             document.getElementById('contactDropdown').classList.add('hidden');
         });
+
+        // —— Section videos: lazy-load + play only while in viewport ——————
+        const sectionVideoObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                const vid = entry.target;
+                if (entry.isIntersecting) {
+                    if (!vid.src && vid.dataset.src) vid.src = vid.dataset.src;
+                    vid.play().catch(() => {});
+                    vid.classList.add('is-playing');
+                } else {
+                    vid.pause();
+                    vid.classList.remove('is-playing');
+                }
+            });
+        }, { threshold: 0.25 });
+        document.querySelectorAll('.video-section-bg').forEach(v => sectionVideoObserver.observe(v));
 
         // —— Hero video: fade in only once it actually has playable data ——
         const heroVideo = document.getElementById('heroVideo');
