@@ -116,6 +116,29 @@
         @keyframes fadeIn { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
         .fade-in { animation: fadeIn 0.4s ease forwards; }
 
+        /* ── SCROLL-REVEAL ───────────────────────────────── */
+        .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.7s cubic-bezier(.22,1,.36,1), transform 0.7s cubic-bezier(.22,1,.36,1); }
+        .reveal.in-view { opacity: 1; transform: translateY(0); }
+        .reveal-stagger.in-view > * { animation: revealItem 0.6s cubic-bezier(.22,1,.36,1) backwards; }
+        .reveal-stagger.in-view > *:nth-child(1) { animation-delay: 0.03s; }
+        .reveal-stagger.in-view > *:nth-child(2) { animation-delay: 0.09s; }
+        .reveal-stagger.in-view > *:nth-child(3) { animation-delay: 0.15s; }
+        @keyframes revealItem { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+        @media (prefers-reduced-motion: reduce) {
+            .reveal, .reveal-stagger > * { opacity:1 !important; transform:none !important; animation:none !important; transition:none !important; }
+        }
+
+        /* ── RISK GAUGE ───────────────────────────────────── */
+        .risk-gauge-stat { display: flex; align-items: center; gap: 0.9rem; }
+        .risk-gauge-num { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.6rem; color: #fcd34d; }
+
+        /* ── NUMBER POP ───────────────────────────────────── */
+        @keyframes numPop { 0% { transform: scale(0.85); opacity:0.3; } 100% { transform: scale(1); opacity:1; } }
+        .kpi-card { animation: numPop 0.5s cubic-bezier(.34,1.56,.64,1) backwards; }
+        .kpi-card:nth-child(1) { animation-delay: 0.05s; }
+        .kpi-card:nth-child(2) { animation-delay: 0.15s; }
+        .kpi-card:nth-child(3) { animation-delay: 0.25s; }
+
         /* ── DASHBOARD HEADER ────────────────────────────── */
         .dash-header {
             position: relative;
@@ -245,15 +268,16 @@
                             <p class="kpi-label">Portfolio at Risk</p>
                             <p class="kpi-value" id="valRiskPct" style="color:#fcd34d;">—</p>
                         </div>
-                        <div class="kpi-icon">
-                            <svg width="20" height="20" fill="none" stroke="#fbbf24" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
-                        </div>
+                        <svg id="riskGauge" width="46" height="46" viewBox="0 0 46 46" style="flex-shrink:0;">
+                            <circle cx="23" cy="23" r="19" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="5"/>
+                            <circle id="riskGaugeArc" cx="23" cy="23" r="19" fill="none" stroke="#fbbf24" stroke-width="5" stroke-linecap="round" stroke-dasharray="0 119.4" transform="rotate(-90 23 23)" style="transition:stroke-dasharray 1.2s cubic-bezier(.22,1,.36,1);"/>
+                        </svg>
                     </div>
                 </div>
             </div>
 
             <!-- PAYWALL -->
-            <div id="paywallCard" class="glass glow-cyan" style="border-radius:20px;padding:2.5rem;position:relative;overflow:hidden;margin-bottom:1.5rem;">
+            <div id="paywallCard" class="glass glow-cyan reveal" style="border-radius:20px;padding:2.5rem;position:relative;overflow:hidden;margin-bottom:1.5rem;">
                 <div class="scan-line"></div>
                 <div style="position:relative;z-index:1;text-align:center;">
                     <div style="display:inline-flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:14px;background:rgba(34,211,238,0.08);border:1px solid rgba(34,211,238,0.18);margin-bottom:1.25rem;">
@@ -358,7 +382,7 @@
             </div>
 
             <!-- Holdings: allocation chart -->
-            <div class="glass" style="border-radius:20px;padding:2.25rem;margin-bottom:1.5rem;">
+            <div class="glass reveal" style="border-radius:20px;padding:2.25rem;margin-bottom:1.5rem;">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:0.5rem;">
                     <h3 style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.2rem;letter-spacing:-0.02em;color:#ffffff;">Verified Portfolio Assets</h3>
                     <span style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:#475569;text-transform:uppercase;letter-spacing:0.08em;" id="fundRowCount"></span>
@@ -474,6 +498,8 @@
             document.getElementById('paywallCard').classList.add('hidden');
             const sec = document.getElementById('aiAdviceSection');
             sec.classList.remove('hidden');
+            sec.classList.add('reveal');
+            requestAnimationFrame(() => requestAnimationFrame(() => sec.classList.add('in-view')));
             sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
             document.getElementById('aiSummary').innerText = advice.analysis_summary ||
@@ -484,6 +510,12 @@
             const riskPct = totalValue > 0 ? (redundantCapital / totalValue * 100) : 0;
             animateValue(document.getElementById('valRedundant'), redundantCapital, { prefix: '₹', decimals: 0, duration: 1200 });
             animateValue(document.getElementById('valRiskPct'), riskPct, { suffix: '%', decimals: 1, duration: 1200 });
+            const gaugeArc = document.getElementById('riskGaugeArc');
+            if (gaugeArc) {
+                const circumference = 2 * Math.PI * 19;
+                const filled = Math.min(riskPct, 100) / 100 * circumference;
+                requestAnimationFrame(() => { gaugeArc.style.strokeDasharray = `${filled} ${circumference}`; });
+            }
 
             const redundancyEl = document.getElementById('redundancyReport');
             if (redundantFunds.length > 0) {
@@ -556,7 +588,7 @@
             document.getElementById('aiStockDetails').innerHTML = stocks.length > 0
                 ? stocks.slice(0, 15).map(s => {
                     const maxW = Math.max(...s.held_by.map(h => h.weight_percent));
-                    return `<div class="bg-white/[0.02] border border-slate-800 rounded-xl p-4">
+                    return `<div class="bg-white/[0.02] border border-slate-800 rounded-xl p-4 hover-lift">
                         <div class="flex items-center justify-between mb-3">
                             <p class="text-sm font-semibold text-slate-200">${s.stock_name}</p>
                             <span class="font-mono text-xs text-cyan-400 bg-cyan-400/10 px-2 py-0.5 rounded-full border border-cyan-400/20">${s.held_by.length} funds</span>
@@ -566,7 +598,7 @@
                                 <div class="flex items-center gap-2">
                                     <span class="text-xs text-slate-500 w-48 truncate font-mono">${h.fund_name.split(' ').slice(0,4).join(' ')}</span>
                                     <div class="flex-1 bg-slate-800 rounded-full h-1.5 overflow-hidden">
-                                        <div class="bar-low h-1.5 rounded-full" style="width:${(h.weight_percent/maxW*100).toFixed(1)}%"></div>
+                                        <div class="bar-low chart-bar-fill h-1.5 rounded-full" style="--target-w:${(h.weight_percent/maxW*100).toFixed(1)}%"></div>
                                     </div>
                                     <span class="text-xs font-mono text-slate-400 w-10 text-right">${h.weight_percent}%</span>
                                 </div>`).join('')}
@@ -574,6 +606,10 @@
                     </div>`;
                 }).join('')
                 : '<p class="text-sm text-slate-500">No common stock holdings found across these funds.</p>';
+
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                document.querySelectorAll('.chart-bar-fill').forEach(el => el.classList.add('grown'));
+            }));
 
             const alts = advice.diversification_note || advice.suggested_replacements || [];
             document.getElementById('aiReplaceList').innerHTML = Array.isArray(alts) && alts.length > 0
@@ -630,6 +666,16 @@
             }
         }
 
+        // —— Scroll-reveal for cards ————————————————————————————————————
+        const reportRevealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('in-view');
+                    reportRevealObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
         // ——— Init: load data from sessionStorage ———
         window.addEventListener('DOMContentLoaded', () => {
             const raw = sessionStorage.getItem('folioxray_cas_data');
@@ -643,6 +689,7 @@
 
             document.getElementById('loadingState').style.display = 'none';
             document.getElementById('reportPage').style.display = 'block';
+            document.querySelectorAll('.reveal').forEach(el => reportRevealObserver.observe(el));
 
             animateValue(document.getElementById('valTotal'), currentTotalValue, { prefix: '₹', decimals: 0, duration: 1400 });
             document.getElementById('fundCountLabel').innerText = data.fund_count + ' funds';
