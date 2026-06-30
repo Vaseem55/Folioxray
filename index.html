@@ -115,10 +115,13 @@
             display: flex;
             align-items: center;
             padding-top: 72px;
-            background-image: url('/hero-bg.png');
-            background-size: cover;
-            background-position: center center;
+            background: #050508;
             overflow: hidden;
+        }
+        .hero-video {
+            position: absolute; inset: 0; width: 100%; height: 100%;
+            object-fit: cover; object-position: center center;
+            z-index: 0;
         }
         .hero-overlay {
             position: absolute; inset: 0; pointer-events: none;
@@ -502,7 +505,6 @@
 
         /* ── RESPONSIVE ─────────────────────────────────── */
         @media (max-width: 768px) {
-            .hero-section { background-image: url('/mobile-bg.png') !important; background-position: center center !important; }
             .editorial-nav { padding: 0.85rem 1.25rem; }
             .nav-links { gap: 1.2rem; }
             .nav-link { font-size: 0.78rem; }
@@ -618,6 +620,9 @@
 
     <!-- ── HERO SECTION ──────────────────────────────── -->
     <section id="heroSection" class="hero-section">
+        <video class="hero-video" autoplay muted loop playsinline poster="/hero-bg.png">
+            <source src="/hero-video.mp4" type="video/mp4">
+        </video>
         <div class="hero-overlay"></div>
 
         <!-- LEFT: text content -->
