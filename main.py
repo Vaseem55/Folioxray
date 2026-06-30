@@ -9,7 +9,7 @@ import httpx
 import razorpay
 from bs4 import BeautifulSoup
 from fastapi import FastAPI, File, Form, UploadFile
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import JSONResponse, FileResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from openai import AsyncOpenAI
 from dotenv import load_dotenv
@@ -845,6 +845,23 @@ async def serve_frontend():
 @app.get("/report")
 async def serve_report():
     return FileResponse("report.html", media_type="text/html; charset=utf-8")
+
+@app.get("/robots.txt")
+async def serve_robots():
+    content = "User-agent: *\nAllow: /\nDisallow: /report\nSitemap: https://folioxray.up.railway.app/sitemap.xml\n"
+    return Response(content=content, media_type="text/plain")
+
+
+@app.get("/sitemap.xml")
+async def serve_sitemap():
+    content = """<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://folioxray.up.railway.app/</loc><priority>1.0</priority></url>
+  <url><loc>https://folioxray.up.railway.app/privacy</loc><priority>0.3</priority></url>
+  <url><loc>https://folioxray.up.railway.app/terms</loc><priority>0.3</priority></url>
+</urlset>"""
+    return Response(content=content, media_type="application/xml")
+
 
 @app.get("/privacy")
 async def serve_privacy():
