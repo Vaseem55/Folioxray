@@ -310,14 +310,33 @@
                 </div>
             </div>
 
-            <!-- Holdings -->
+            <!-- Holdings: allocation chart -->
             <div class="glass" style="border-radius:20px;padding:2.25rem;margin-bottom:1.5rem;">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;flex-wrap:wrap;gap:0.5rem;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:0.5rem;">
                     <h3 style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.2rem;letter-spacing:-0.02em;color:#ffffff;">Verified Portfolio Assets</h3>
                     <span style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:#475569;text-transform:uppercase;letter-spacing:0.08em;" id="fundRowCount"></span>
                 </div>
-                <table role="table" style="width:100%;border-collapse:collapse;">
-                    <caption class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">Portfolio holdings with current value</caption>
+
+                <div style="display:grid;grid-template-columns:auto 1fr;gap:2rem;align-items:center;">
+                    <!-- Donut chart -->
+                    <div id="fundDonutWrap" style="display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <svg id="fundDonut" viewBox="0 0 200 200" width="180" height="180" role="img" aria-labelledby="fundDonutTitle">
+                            <title id="fundDonutTitle">Portfolio allocation by fund value</title>
+                            <circle cx="100" cy="100" r="80" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="26"/>
+                            <g id="fundDonutPaths"></g>
+                            <text id="fundDonutCenterPct" x="100" y="94" text-anchor="middle" fill="#ffffff" font-family="Space Grotesk,sans-serif" font-weight="700" font-size="24"></text>
+                            <text id="fundDonutCenterLabel" x="100" y="114" text-anchor="middle" fill="#64748b" font-family="JetBrains Mono,monospace" font-size="8"></text>
+                        </svg>
+                    </div>
+
+                    <!-- Legend / breakdown -->
+                    <div id="fundLegend" style="display:flex;flex-direction:column;gap:0.7rem;min-width:0;"></div>
+                </div>
+
+                <!-- Accessible data table (screen-reader / non-visual fallback) -->
+                <table style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">
+                    <caption>Portfolio holdings with current value and percent of portfolio</caption>
+                    <thead><tr><th>Scheme name</th><th>Current value</th><th>Percent of portfolio</th></tr></thead>
                     <tbody id="fundTableBody"></tbody>
                 </table>
             </div>
@@ -360,6 +379,45 @@
                 else el.dataset.rawValue = String(endValue);
             }
             requestAnimationFrame(tick);
+        }
+
+        // ——— Donut chart: portfolio allocation by fund ———
+        const DONUT_COLORS = ['#22d3ee', '#a78bfa', '#34d399', '#fbbf24', '#fb7185', '#60a5fa', '#f472b6', '#94a3b8'];
+
+        function renderFundDonut(funds, totalValue) {
+            const sorted = [...funds].sort((a, b) => b.current_value_inr - a.current_value_inr);
+            const TOP_N = 6;
+            const top = sorted.slice(0, TOP_N);
+            const rest = sorted.slice(TOP_N);
+            const restSum = rest.reduce((s, f) => s + f.current_value_inr, 0);
+            const slices = top.map((f, i) => ({ name: f.scheme_name, value: f.current_value_inr, color: DONUT_COLORS[i % DONUT_COLORS.length] }));
+            if (restSum > 0) slices.push({ name: `${rest.length} other fund${rest.length !== 1 ? 's' : ''}`, value: restSum, color: '#334155' });
+
+            const r = 80, cx = 100, cy = 100, strokeW = 26;
+            const circumference = 2 * Math.PI * r;
+            let cumulative = 0;
+            const paths = slices.map(s => {
+                const frac = totalValue > 0 ? s.value / totalValue : 0;
+                const dashArray = `${Math.max(frac * circumference - 2, 0)} ${circumference}`;
+                const rotate = cumulative * 360 - 90;
+                cumulative += frac;
+                return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${s.color}" stroke-width="${strokeW}" stroke-linecap="round" stroke-dasharray="${dashArray}" transform="rotate(${rotate} ${cx} ${cy})" style="transition:stroke-dasharray 0.8s cubic-bezier(.22,1,.36,1);"></circle>`;
+            }).join('');
+            document.getElementById('fundDonutPaths').innerHTML = paths;
+
+            const topPct = totalValue > 0 ? (slices[0].value / totalValue * 100) : 0;
+            document.getElementById('fundDonutCenterPct').textContent = topPct.toFixed(0) + '%';
+            document.getElementById('fundDonutCenterLabel').textContent = (slices[0].name.split(' ').slice(0, 2).join(' ')).toUpperCase();
+
+            document.getElementById('fundLegend').innerHTML = slices.map(s => {
+                const pct = totalValue > 0 ? (s.value / totalValue * 100) : 0;
+                return `<div style="display:flex;align-items:center;gap:0.7rem;">
+                    <span style="width:10px;height:10px;border-radius:3px;background:${s.color};flex-shrink:0;"></span>
+                    <span style="flex:1;min-width:0;font-size:0.84rem;color:#cbd5e1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s.name}</span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:#64748b;flex-shrink:0;">${pct.toFixed(1)}%</span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;font-weight:700;color:#ffffff;flex-shrink:0;width:90px;text-align:right;">₹${s.value.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
+                </div>`;
+            }).join('');
         }
 
         function renderReport(data) {
@@ -531,20 +589,15 @@
             document.getElementById('totalValueLabel').innerText = '₹' + currentTotalValue.toLocaleString('en-IN', { maximumFractionDigits: 0 });
 
             document.getElementById('fundRowCount').innerText = data.funds.length + ' holding' + (data.funds.length !== 1 ? 's' : '');
+            renderFundDonut(data.funds, currentTotalValue);
+
+            // Accessible fallback table (visually hidden)
             document.getElementById('fundTableBody').innerHTML = data.funds.map(f => {
-                const initials = f.scheme_name.split(' ').filter(w => w.length > 2).slice(0, 2).map(w => w[0]).join('').toUpperCase() || f.scheme_name.slice(0,2).toUpperCase();
                 const pct = currentTotalValue > 0 ? (f.current_value_inr / currentTotalValue * 100).toFixed(1) : 0;
                 return `<tr>
-                    <td style="padding:0;border-bottom:1px solid rgba(255,255,255,0.05);">
-                        <div class="data-row" style="border-bottom:none;">
-                            <div class="data-row-icon">${initials}</div>
-                            <div style="flex:1;min-width:0;">
-                                <p class="data-row-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.scheme_name}</p>
-                                <p class="data-row-sub">${pct}% of portfolio</p>
-                            </div>
-                            <span class="data-row-value">₹${f.current_value_inr.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
-                        </div>
-                    </td>
+                    <td>${f.scheme_name}</td>
+                    <td>₹${f.current_value_inr.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</td>
+                    <td>${pct}%</td>
                 </tr>`;
             }).join('');
 
