@@ -54,6 +54,27 @@
         .bar-mid  { background:linear-gradient(90deg,#f59e0b,#fbbf24); }
         .bar-low  { background:linear-gradient(90deg,#10b981,#34d399); }
 
+        /* ── ANIMATED HORIZONTAL BAR CHART ROWS ──────────── */
+        .chart-bar-fill { width: 0% !important; transition: width 1s cubic-bezier(.22,1,.36,1); }
+        .chart-bar-fill.grown { width: var(--target-w) !important; }
+
+        .rb-row {
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(244,63,94,0.18);
+            border-radius: 14px; padding: 1rem 1.25rem;
+        }
+        .rb-top { display:flex; align-items:flex-start; justify-content:space-between; gap:0.75rem; margin-bottom:0.65rem; flex-wrap:wrap; }
+        .rb-name { font-size:0.88rem; font-weight:600; color:#e2e8f0; }
+        .rb-sub { font-family:'JetBrains Mono',monospace; font-size:0.66rem; color:#fb7185; margin-top:0.2rem; }
+        .rb-value { font-family:'JetBrains Mono',monospace; font-weight:700; font-size:0.92rem; color:#fda4af; white-space:nowrap; }
+        .rb-track { background: rgba(255,255,255,0.06); border-radius: 100px; height: 8px; overflow: hidden; }
+        .rb-fill { height: 8px; border-radius: 100px; background: linear-gradient(90deg,#f43f5e,#fb923c); }
+
+        .ov-row {
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px; padding: 1.1rem 1.25rem;
+        }
+        .ov-bigpct { font-family:'Space Grotesk',sans-serif; font-weight:800; font-size:1.7rem; color:#ffffff; line-height:1; }
+
         .results-wrapper { max-width: 900px; margin: 0 auto; padding: 6rem 2rem 4rem; }
 
         .contact-bar {
@@ -438,18 +459,26 @@
             animateValue(document.getElementById('valRedundant'), redundantCapital, { prefix: '₹', decimals: 0, duration: 1200 });
             animateValue(document.getElementById('valRiskPct'), riskPct, { suffix: '%', decimals: 1, duration: 1200 });
 
-            document.getElementById('redundancyReport').innerHTML = redundantFunds.length > 0
-                ? redundantFunds.map(fund => {
+            const redundancyEl = document.getElementById('redundancyReport');
+            if (redundantFunds.length > 0) {
+                const maxRedundant = Math.max(...redundantFunds.map(f => f.current_value_inr));
+                redundancyEl.innerHTML = redundantFunds.map(fund => {
                     const pct = totalValue > 0 ? (fund.current_value_inr / totalValue * 100).toFixed(1) : 0;
-                    return `<div class="flex items-center justify-between p-3.5 bg-white/[0.03] rounded-xl border border-rose-500/20">
-                        <div>
-                            <p class="text-sm font-semibold text-slate-200">${fund.scheme_name}</p>
-                            <p class="text-xs text-rose-400 mt-0.5 font-mono">${pct}% of portfolio · overlaps with other domestic equity funds</p>
+                    const barW = maxRedundant > 0 ? (fund.current_value_inr / maxRedundant * 100).toFixed(1) : 0;
+                    return `<div class="rb-row">
+                        <div class="rb-top">
+                            <div>
+                                <p class="rb-name">${fund.scheme_name}</p>
+                                <p class="rb-sub">${pct}% of portfolio · overlaps with other domestic equity funds</p>
+                            </div>
+                            <span class="rb-value">₹${fund.current_value_inr.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
                         </div>
-                        <span class="text-sm font-bold text-rose-300 font-mono ml-4 whitespace-nowrap">₹${fund.current_value_inr.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
+                        <div class="rb-track"><div class="rb-fill chart-bar-fill" style="--target-w:${barW}%"></div></div>
                     </div>`;
-                }).join('')
-                : '<p class="text-sm text-slate-500">No critically clashing funds detected.</p>';
+                }).join('');
+            } else {
+                redundancyEl.innerHTML = '<p class="text-sm text-slate-500">No critically clashing funds detected.</p>';
+            }
 
             const pairs = advice.pair_overlaps || [];
             document.getElementById('pairOverlapContainer').innerHTML = pairs.length > 0
@@ -469,7 +498,7 @@
                     const chips = pair.common_stocks.slice(0, 4).map(s =>
                         `<span class="inline-flex items-center gap-1 bg-white/[0.04] border border-slate-700/50 text-xs font-mono px-2 py-0.5 rounded-full text-slate-300">${s.stock_name} <span class="text-cyan-400 font-semibold">${s.overlap_contribution}%</span></span>`
                     ).join('');
-                    return `<div class="bg-white/[0.03] border border-slate-700/50 rounded-xl p-4 hover-lift">
+                    return `<div class="ov-row hover-lift">
                         <div class="flex items-start justify-between gap-3 mb-3 flex-wrap">
                             <div class="flex items-center gap-2 flex-wrap">
                                 <span class="font-mono text-xs font-bold text-slate-500">#${idx + 1}</span>
@@ -480,10 +509,10 @@
                             ${badge}
                         </div>
                         <div class="flex items-center gap-3 mb-3">
-                            <div class="flex-1 bg-slate-800 rounded-full h-2.5 overflow-hidden">
-                                <div class="${barClass} h-2.5 rounded-full" style="width:${Math.min(pct,100)}%"></div>
+                            <div class="flex-1 rb-track">
+                                <div class="${barClass} chart-bar-fill" style="height:8px;border-radius:100px;--target-w:${Math.min(pct,100)}%"></div>
                             </div>
-                            <span class="font-mono font-bold text-white text-sm whitespace-nowrap">${pct}%</span>
+                            <span class="ov-bigpct">${pct}<span style="font-size:0.95rem;color:#64748b;">%</span></span>
                         </div>
                         <p class="font-mono text-xs text-slate-500 uppercase tracking-widest mb-2">${pair.common_stocks.length} common stocks · top contributors:</p>
                         <div class="flex flex-wrap gap-1.5">${chips || '<span class="font-mono text-xs text-slate-600">No common stocks found</span>'}</div>
@@ -491,6 +520,11 @@
                     </div>`;
                 }).join('')
                 : '<p class="text-sm text-slate-500">No pairwise overlap data available.</p>';
+
+            // Trigger bar-grow animation on next frame
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                document.querySelectorAll('.chart-bar-fill').forEach(el => el.classList.add('grown'));
+            }));
 
             const stocks = advice.overlapping_stocks || [];
             document.getElementById('aiStockDetails').innerHTML = stocks.length > 0
