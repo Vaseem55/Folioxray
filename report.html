@@ -77,6 +77,32 @@
 
         .results-wrapper { max-width: 900px; margin: 0 auto; padding: 6rem 2rem 4rem; }
 
+        /* ── RESPONSIVE ─────────────────────────────────── */
+        @media (max-width: 768px) {
+            .editorial-nav { padding: 0.85rem 1.25rem; }
+            .nav-back span { display: none; }
+            .results-wrapper { padding: 5.5rem 1.25rem 3rem; }
+            .dash-header { padding: 1.75rem 1.5rem 2rem; border-radius: 18px; }
+            .kpi-grid { grid-template-columns: repeat(auto-fit,minmax(140px,1fr)); gap: 0.75rem; }
+            .kpi-card { padding: 1.1rem; }
+            .kpi-value { font-size: 1.3rem; }
+            .kpi-icon { width: 38px; height: 38px; }
+            #fundDonutWrap svg { width: 140px; height: 140px; }
+        }
+        @media (max-width: 600px) {
+            div[style*="grid-template-columns:auto 1fr"] {
+                grid-template-columns: 1fr !important;
+                justify-items: center;
+                text-align: center;
+            }
+            .legend-value { width: auto !important; font-size: 0.74rem !important; }
+            .legend-row { flex-wrap: wrap; row-gap: 0.2rem; }
+        }
+        @media (max-width: 480px) {
+            .results-wrapper { padding: 5rem 1rem 2.5rem; }
+            .dash-header { padding: 1.5rem 1.1rem 1.75rem; }
+        }
+
         .contact-bar {
             display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap;
             gap:1rem; padding:1.5rem 0; border-top:1px solid rgba(255,255,255,0.06); margin-top:3rem;
@@ -432,11 +458,11 @@
 
             document.getElementById('fundLegend').innerHTML = slices.map(s => {
                 const pct = totalValue > 0 ? (s.value / totalValue * 100) : 0;
-                return `<div style="display:flex;align-items:center;gap:0.7rem;">
+                return `<div class="legend-row" style="display:flex;align-items:center;gap:0.7rem;">
                     <span style="width:10px;height:10px;border-radius:3px;background:${s.color};flex-shrink:0;"></span>
                     <span style="flex:1;min-width:0;font-size:0.84rem;color:#cbd5e1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s.name}</span>
                     <span style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:#64748b;flex-shrink:0;">${pct.toFixed(1)}%</span>
-                    <span style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;font-weight:700;color:#ffffff;flex-shrink:0;width:90px;text-align:right;">₹${s.value.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
+                    <span class="legend-value" style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;font-weight:700;color:#ffffff;flex-shrink:0;width:90px;text-align:right;">₹${s.value.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
                 </div>`;
             }).join('');
         }

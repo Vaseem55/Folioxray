@@ -195,7 +195,7 @@
         /* ── HERO PRODUCT MOCKUP CARD ───────────────────── */
         .hero-mock-card {
             position: absolute; top: 50%; right: 7%;
-            transform: translateY(-50%);
+            transform: translateY(-50%) translateX(14px);
             width: 300px;
             opacity: 0;
             background: rgba(10,13,24,0.72);
@@ -204,15 +204,15 @@
             padding: 1.5rem 1.6rem;
             backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px);
             box-shadow: 0 30px 80px -10px rgba(0,0,0,0.6), 0 0 0 1px rgba(34,211,238,0.07);
-            animation: mockFadeIn 0.9s cubic-bezier(.22,1,.36,1) 0.6s forwards;
+            transition: opacity 0.9s cubic-bezier(.22,1,.36,1), transform 0.9s cubic-bezier(.22,1,.36,1);
+        }
+        .hero-mock-card.show {
+            opacity: 1;
+            transform: translateY(-50%) translateX(0);
         }
         @keyframes mockFloat {
             0%,100% { transform: translateY(-50%); }
             50%      { transform: translateY(calc(-50% - 10px)); }
-        }
-        @keyframes mockFadeIn {
-            from { opacity: 0; transform: translateY(-50%) translateX(14px); }
-            to   { opacity: 1; transform: translateY(-50%) translateX(0); }
         }
         .hero-mock-card.floating {
             animation: mockFloat 6s ease-in-out infinite;
@@ -509,6 +509,14 @@
         .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
         /* ── RESPONSIVE ─────────────────────────────────── */
+        @media (max-width: 1024px) {
+            .hero-content { width: 60%; min-width: 380px; padding: 3.5rem 2rem 3.5rem 2.5rem; }
+            .hero-mock-card { width: 260px; right: 4%; }
+            .nav-links { gap: 1.5rem; }
+        }
+        @media (max-width: 900px) {
+            .kpi-grid { grid-template-columns: repeat(auto-fit,minmax(160px,1fr)); }
+        }
         @media (max-width: 768px) {
             .editorial-nav { padding: 0.85rem 1.25rem; }
             .nav-links { gap: 1.2rem; }
@@ -529,12 +537,18 @@
             .hero-pills { gap: 0.35rem; }
             .hero-pill { font-size: 0.56rem; padding: 0.28rem 0.6rem; }
         }
+        @media (max-width: 640px) {
+            .nav-links > .nav-link, .nav-links > .nav-dropdown-wrapper { display: none; }
+            .editorial-nav { padding: 0.8rem 1rem; }
+        }
         @media (max-width: 480px) {
-            .nav-links { gap: 0.8rem; }
-            .nav-link { font-size: 0.72rem; }
             .nav-cta { padding: 0.4rem 0.75rem; font-size: 0.72rem; }
             .hero-content { padding: 2rem 1.1rem 2.5rem; }
             .hero-h1 { font-size: clamp(1.65rem, 6.5vw, 2.2rem); }
+            .hero-mock-card { display: none; }
+        }
+        @media (max-width: 600px) {
+            section h2 { font-size: clamp(1.5rem, 6vw, 2rem) !important; }
         }
 
         /* ── ANIMATE spin ───────────────────────────────── */
@@ -2035,18 +2049,28 @@
 
         // —— Hero video: fade in only once it actually has playable data ——
         const heroVideo = document.getElementById('heroVideo');
+        const heroMockCard = document.querySelector('.hero-mock-card');
+        let heroRevealed = false;
+        function revealHero() {
+            if (heroRevealed) return;
+            heroRevealed = true;
+            if (heroVideo) heroVideo.classList.add('is-ready');
+            if (heroMockCard) heroMockCard.classList.add('show');
+        }
         if (heroVideo) {
-            const showVideo = () => heroVideo.classList.add('is-ready');
-            if (heroVideo.readyState >= 3) showVideo();
-            else heroVideo.addEventListener('canplay', showVideo, { once: true });
+            // Fallback so the card still appears even if the video fails/never fires canplay
+            const fallbackTimer = setTimeout(revealHero, 2500);
+            if (heroVideo.readyState >= 3) { clearTimeout(fallbackTimer); revealHero(); }
+            else heroVideo.addEventListener('canplay', () => { clearTimeout(fallbackTimer); revealHero(); }, { once: true });
+        } else {
+            revealHero();
         }
 
         // —— Hero mock card: hand off one-time entrance to infinite float ——
-        const heroMockCard = document.querySelector('.hero-mock-card');
         if (heroMockCard) {
-            heroMockCard.addEventListener('animationend', (e) => {
-                if (e.animationName === 'mockFadeIn') heroMockCard.classList.add('floating');
-            });
+            heroMockCard.addEventListener('transitionend', (e) => {
+                if (e.propertyName === 'opacity') heroMockCard.classList.add('floating');
+            }, { once: true });
         }
 
         // —— Scroll-reveal for sections & cards ————————————————————————
