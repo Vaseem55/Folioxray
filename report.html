@@ -55,7 +55,7 @@
         .bar-low  { background:linear-gradient(90deg,#10b981,#34d399); }
 
         /* ── ANIMATED HORIZONTAL BAR CHART ROWS ──────────── */
-        .chart-bar-fill { width: 0% !important; transition: width 1s cubic-bezier(.22,1,.36,1); }
+        .chart-bar-fill { width: 0% !important; transition: width 0.6s cubic-bezier(.22,1,.36,1); }
         .chart-bar-fill.grown { width: var(--target-w) !important; }
 
         .rb-row {
@@ -117,7 +117,7 @@
         .fade-in { animation: fadeIn 0.4s ease forwards; }
 
         /* ── SCROLL-REVEAL ───────────────────────────────── */
-        .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.7s cubic-bezier(.22,1,.36,1), transform 0.7s cubic-bezier(.22,1,.36,1); }
+        .reveal { opacity: 0; transform: translateY(12px); transition: opacity 0.4s cubic-bezier(.22,1,.36,1), transform 0.4s cubic-bezier(.22,1,.36,1); }
         .reveal.in-view { opacity: 1; transform: translateY(0); }
         .reveal-stagger.in-view > * { animation: revealItem 0.6s cubic-bezier(.22,1,.36,1) backwards; }
         .reveal-stagger.in-view > *:nth-child(1) { animation-delay: 0.03s; }
@@ -132,12 +132,12 @@
         .risk-gauge-stat { display: flex; align-items: center; gap: 0.9rem; }
         .risk-gauge-num { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.6rem; color: #fcd34d; }
 
-        /* ── NUMBER POP ───────────────────────────────────── */
-        @keyframes numPop { 0% { transform: scale(0.85); opacity:0.3; } 100% { transform: scale(1); opacity:1; } }
-        .kpi-card { animation: numPop 0.5s cubic-bezier(.34,1.56,.64,1) backwards; }
-        .kpi-card:nth-child(1) { animation-delay: 0.05s; }
-        .kpi-card:nth-child(2) { animation-delay: 0.15s; }
-        .kpi-card:nth-child(3) { animation-delay: 0.25s; }
+        /* ── KPI CARD ENTRANCE ───────────────────────────── */
+        @keyframes kpiIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .kpi-card { animation: kpiIn 0.35s cubic-bezier(.22,1,.36,1) backwards; }
+        .kpi-card:nth-child(1) { animation-delay: 0.03s; }
+        .kpi-card:nth-child(2) { animation-delay: 0.08s; }
+        .kpi-card:nth-child(3) { animation-delay: 0.13s; }
 
         /* ── DASHBOARD HEADER ────────────────────────────── */
         .dash-header {
@@ -270,7 +270,7 @@
                         </div>
                         <svg id="riskGauge" width="46" height="46" viewBox="0 0 46 46" style="flex-shrink:0;">
                             <circle cx="23" cy="23" r="19" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="5"/>
-                            <circle id="riskGaugeArc" cx="23" cy="23" r="19" fill="none" stroke="#fbbf24" stroke-width="5" stroke-linecap="round" stroke-dasharray="0 119.4" transform="rotate(-90 23 23)" style="transition:stroke-dasharray 1.2s cubic-bezier(.22,1,.36,1);"/>
+                            <circle id="riskGaugeArc" cx="23" cy="23" r="19" fill="none" stroke="#fbbf24" stroke-width="5" stroke-linecap="round" stroke-dasharray="0 119.4" transform="rotate(-90 23 23)" style="transition:stroke-dasharray 0.7s cubic-bezier(.22,1,.36,1);"/>
                         </svg>
                     </div>
                 </div>
