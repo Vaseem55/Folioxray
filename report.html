@@ -22,7 +22,7 @@
             background: rgba(6,8,18,0.82); backdrop-filter: blur(18px);
             border-bottom: 1px solid rgba(255,255,255,0.07);
         }
-        .nav-logo { font-family: 'Space Grotesk', sans-serif; font-weight: 800; font-size: 1.25rem; color: #ffffff; letter-spacing: -0.02em; text-decoration: none; }
+        .nav-logo { display: flex; align-items: center; gap: 0.5rem; font-family: 'Space Grotesk', sans-serif; font-weight: 800; font-size: 1.25rem; color: #ffffff; letter-spacing: -0.02em; text-decoration: none; }
         .nav-logo span { color: #22d3ee; }
         .nav-back {
             display: flex; align-items: center; gap: 0.5rem;
@@ -211,7 +211,13 @@
 
     <!-- NAV -->
     <nav class="editorial-nav">
-        <a href="/" class="nav-logo">Folio<span>X</span>Ray</a>
+        <a href="/" class="nav-logo">
+            <svg width="22" height="22" viewBox="0 0 22 22" style="flex-shrink:0;">
+                <circle cx="8.5" cy="11" r="6.5" fill="none" stroke="#22d3ee" stroke-width="1.6" opacity="0.9"/>
+                <circle cx="13.5" cy="11" r="6.5" fill="none" stroke="#a78bfa" stroke-width="1.6" opacity="0.9"/>
+            </svg>
+            Folio<span>X</span>Ray
+        </a>
         <a href="/" class="nav-back">
             <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
             New Analysis
