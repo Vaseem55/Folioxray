@@ -68,6 +68,73 @@
 
         @keyframes fadeIn { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
         .fade-in { animation: fadeIn 0.4s ease forwards; }
+
+        /* ── DASHBOARD HEADER ────────────────────────────── */
+        .dash-header {
+            position: relative;
+            border-radius: 24px;
+            overflow: hidden;
+            padding: 2.5rem 2.25rem 2.75rem;
+            margin-bottom: 1.5rem;
+            background: radial-gradient(ellipse 520px 360px at 88% 18%, rgba(34,211,238,0.16), transparent 65%),
+                        radial-gradient(ellipse 420px 320px at 100% 90%, rgba(167,139,250,0.14), transparent 60%),
+                        linear-gradient(160deg, #0b0e1a 0%, #07080f 100%);
+            border: 1px solid rgba(255,255,255,0.07);
+        }
+        .dash-breadcrumb {
+            display: flex; align-items: center; gap: 0.5rem;
+            font-family: 'Inter', sans-serif; font-size: 0.82rem;
+            color: rgba(255,255,255,0.4); margin-bottom: 0.85rem;
+            position: relative; z-index: 1;
+        }
+        .dash-breadcrumb a { color: rgba(255,255,255,0.4); text-decoration: none; display:flex; align-items:center; }
+        .dash-breadcrumb a:hover { color: #22d3ee; }
+        .dash-breadcrumb .sep { color: rgba(255,255,255,0.2); }
+        .dash-breadcrumb .current { color: rgba(255,255,255,0.75); font-weight: 500; }
+
+        .kpi-grid {
+            display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
+            gap: 1rem; position: relative; z-index: 1;
+        }
+        .kpi-card {
+            background: rgba(255,255,255,0.035);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px; padding: 1.5rem;
+            display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;
+        }
+        .kpi-label {
+            font-family: 'Inter', sans-serif; font-size: 0.78rem; font-weight: 500;
+            color: rgba(255,255,255,0.45); margin-bottom: 0.5rem;
+        }
+        .kpi-value {
+            font-family: 'Space Grotesk', sans-serif; font-weight: 700;
+            font-size: 1.6rem; color: #ffffff; line-height: 1.1;
+        }
+        .kpi-delta { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; font-weight: 600; margin-left: 0.4rem; }
+        .kpi-icon {
+            flex-shrink: 0; width: 46px; height: 46px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(145deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02));
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 6px 14px -6px rgba(0,0,0,0.5);
+        }
+
+        /* ── DATA ROW LIST (replaces plain table) ────────── */
+        .data-row {
+            display: flex; align-items: center; gap: 1rem;
+            padding: 1rem 0.25rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .data-row:last-child { border-bottom: none; }
+        .data-row-icon {
+            flex-shrink: 0; width: 38px; height: 38px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 0.78rem;
+            background: rgba(34,211,238,0.08); border: 1px solid rgba(34,211,238,0.2); color: #22d3ee;
+        }
+        .data-row-name { font-size: 0.88rem; color: #e2e8f0; font-weight: 500; }
+        .data-row-sub { font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: #475569; margin-top: 0.15rem; }
+        .data-row-value { font-family: 'JetBrains Mono', monospace; font-size: 0.92rem; font-weight: 700; color: #ffffff; text-align: right; white-space: nowrap; }
     </style>
 </head>
 <body>
@@ -94,38 +161,47 @@
     <div id="reportPage" style="display:none;">
         <div class="results-wrapper fade-in">
 
-            <!-- Header -->
-            <div style="padding:2rem 0 2.5rem;border-bottom:1px solid rgba(255,255,255,0.06);margin-bottom:2.5rem;">
-                <div style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;letter-spacing:0.14em;text-transform:uppercase;color:#64748b;margin-bottom:0.75rem;display:flex;align-items:center;gap:0.6rem;">
-                    <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#22d3ee;" class="pulse-dot"></span>
-                    Analysis Complete
+            <!-- Header / Dashboard -->
+            <div class="dash-header">
+                <div class="dash-breadcrumb">
+                    <a href="/"><svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg></a>
+                    <span class="sep">/</span>
+                    <span>Reports</span>
+                    <span class="sep">/</span>
+                    <span class="current">Overlap Analysis</span>
                 </div>
-                <h2 style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:clamp(2.2rem,5vw,4rem);letter-spacing:-0.04em;color:#ffffff;line-height:1;">
-                    Your Portfolio<br><span style="color:#22d3ee;">Report.</span>
+                <h2 style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:clamp(1.8rem,3.6vw,2.5rem);letter-spacing:-0.03em;color:#ffffff;line-height:1.1;margin-bottom:1.75rem;position:relative;z-index:1;">
+                    Portfolio Overview
                 </h2>
-            </div>
 
-            <!-- SUMMARY METRICS -->
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-bottom:1.5rem;">
-                <div class="glass rounded-2xl" style="padding:1.75rem;border-radius:16px;overflow:hidden;position:relative;">
-                    <div style="position:absolute;top:0;right:0;width:80px;height:80px;background:rgba(16,185,129,0.08);border-radius:50%;filter:blur(20px);"></div>
-                    <p style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:#10b981;margin-bottom:0.6rem;display:flex;align-items:center;gap:0.5rem;">
-                        Total Portfolio Value
-                        <span style="display:inline-flex;align-items:center;gap:0.3rem;font-size:0.6rem;color:rgba(52,211,153,0.7);">
-                            <span style="width:5px;height:5px;border-radius:50%;background:#34d399;" class="pulse-dot"></span> LIVE
-                        </span>
-                    </p>
-                    <p style="font-family:'Space Grotesk',sans-serif;font-size:1.8rem;font-weight:800;color:#ffffff;" id="valTotal">₹0</p>
-                </div>
-                <div class="glass glow-rose" style="padding:1.75rem;border-radius:16px;overflow:hidden;position:relative;">
-                    <div style="position:absolute;top:0;right:0;width:80px;height:80px;background:rgba(244,63,94,0.08);border-radius:50%;filter:blur(20px);"></div>
-                    <p style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:#f43f5e;margin-bottom:0.6rem;">Capital in Redundant Funds</p>
-                    <p style="font-family:'Space Grotesk',sans-serif;font-size:1.8rem;font-weight:800;color:#fda4af;" id="valRedundant">—</p>
-                </div>
-                <div class="glass" style="padding:1.75rem;border-radius:16px;overflow:hidden;position:relative;">
-                    <div style="position:absolute;top:0;right:0;width:80px;height:80px;background:rgba(245,158,11,0.08);border-radius:50%;filter:blur(20px);"></div>
-                    <p style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:#f59e0b;margin-bottom:0.6rem;">Portfolio at Risk</p>
-                    <p style="font-family:'Space Grotesk',sans-serif;font-size:1.8rem;font-weight:800;color:#fcd34d;" id="valRiskPct">—</p>
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div>
+                            <p class="kpi-label">Total Portfolio Value</p>
+                            <p class="kpi-value" id="valTotal">₹0</p>
+                        </div>
+                        <div class="kpi-icon">
+                            <svg width="20" height="20" fill="none" stroke="#34d399" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h1m4 4h10a2 2 0 002-2v-6a2 2 0 00-2-2h-1m-9 4h.01M21 13H9"/></svg>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div>
+                            <p class="kpi-label">Capital in Redundant Funds</p>
+                            <p class="kpi-value" id="valRedundant" style="color:#fda4af;">—</p>
+                        </div>
+                        <div class="kpi-icon">
+                            <svg width="20" height="20" fill="none" stroke="#fb7185" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div>
+                            <p class="kpi-label">Portfolio at Risk</p>
+                            <p class="kpi-value" id="valRiskPct" style="color:#fcd34d;">—</p>
+                        </div>
+                        <div class="kpi-icon">
+                            <svg width="20" height="20" fill="none" stroke="#fbbf24" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -234,20 +310,16 @@
                 </div>
             </div>
 
-            <!-- Holdings Table -->
+            <!-- Holdings -->
             <div class="glass" style="border-radius:20px;padding:2.25rem;margin-bottom:1.5rem;">
-                <h3 style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:1.2rem;letter-spacing:-0.02em;color:#ffffff;margin-bottom:1.5rem;">Verified Portfolio Assets</h3>
-                <div style="overflow-x:auto;">
-                    <table style="width:100%;text-align:left;border-collapse:collapse;">
-                        <thead>
-                            <tr style="border-bottom:1px solid rgba(255,255,255,0.07);">
-                                <th style="padding:0.85rem 1rem;font-family:'JetBrains Mono',monospace;font-size:0.65rem;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.1em;">Scheme Name</th>
-                                <th style="padding:0.85rem 1rem;font-family:'JetBrains Mono',monospace;font-size:0.65rem;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.1em;text-align:right;">Current Value (₹)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="fundTableBody"></tbody>
-                    </table>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;flex-wrap:wrap;gap:0.5rem;">
+                    <h3 style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.2rem;letter-spacing:-0.02em;color:#ffffff;">Verified Portfolio Assets</h3>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:#475569;text-transform:uppercase;letter-spacing:0.08em;" id="fundRowCount"></span>
                 </div>
+                <table role="table" style="width:100%;border-collapse:collapse;">
+                    <caption class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">Portfolio holdings with current value</caption>
+                    <tbody id="fundTableBody"></tbody>
+                </table>
             </div>
 
             <!-- Contact + Footer -->
@@ -458,12 +530,23 @@
             document.getElementById('fundCountLabel').innerText = data.fund_count + ' funds';
             document.getElementById('totalValueLabel').innerText = '₹' + currentTotalValue.toLocaleString('en-IN', { maximumFractionDigits: 0 });
 
-            document.getElementById('fundTableBody').innerHTML = data.funds.map(f =>
-                `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
-                    <td style="padding:0.85rem 1rem;font-size:0.875rem;color:#94a3b8;font-weight:500;">${f.scheme_name}</td>
-                    <td style="padding:0.85rem 1rem;font-size:0.875rem;color:#ffffff;font-weight:700;text-align:right;font-family:'JetBrains Mono',monospace;">₹${f.current_value_inr.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</td>
-                </tr>`
-            ).join('');
+            document.getElementById('fundRowCount').innerText = data.funds.length + ' holding' + (data.funds.length !== 1 ? 's' : '');
+            document.getElementById('fundTableBody').innerHTML = data.funds.map(f => {
+                const initials = f.scheme_name.split(' ').filter(w => w.length > 2).slice(0, 2).map(w => w[0]).join('').toUpperCase() || f.scheme_name.slice(0,2).toUpperCase();
+                const pct = currentTotalValue > 0 ? (f.current_value_inr / currentTotalValue * 100).toFixed(1) : 0;
+                return `<tr>
+                    <td style="padding:0;border-bottom:1px solid rgba(255,255,255,0.05);">
+                        <div class="data-row" style="border-bottom:none;">
+                            <div class="data-row-icon">${initials}</div>
+                            <div style="flex:1;min-width:0;">
+                                <p class="data-row-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.scheme_name}</p>
+                                <p class="data-row-sub">${pct}% of portfolio</p>
+                            </div>
+                            <span class="data-row-value">₹${f.current_value_inr.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
+                        </div>
+                    </td>
+                </tr>`;
+            }).join('');
 
             // Teaser stats — compute from free data
             const pairs = data.preview_pairs || [];
