@@ -1,0 +1,26 @@
+{
+  "name": "folioxray",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build:css": "tailwindcss -i ./src/tailwind.css -o ./tailwind.css --minify",
+    "watch:css": "tailwindcss -i ./src/tailwind.css -o ./tailwind.css --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Vaseem55/Folioxray.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Vaseem55/Folioxray/issues"
+  },
+  "homepage": "https://github.com/Vaseem55/Folioxray#readme",
+  "devDependencies": {
+    "tailwindcss": "^3.4.19"
+  }
+}

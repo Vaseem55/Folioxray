@@ -3,3 +3,4 @@ fund_cache.json
 __pycache__/
 *.pyc
 *.pdf
+node_modules/

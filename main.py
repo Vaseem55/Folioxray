@@ -869,6 +869,11 @@ async def serve_hero_bg():
     return FileResponse("Gemini_Generated_Image_ir0woiir0woiir0w.png", media_type="image/png")
 
 
+@app.get("/tailwind.css")
+async def serve_tailwind_css():
+    return FileResponse("tailwind.css", media_type="text/css")
+
+
 @app.get("/hero-video.mp4")
 async def serve_hero_video():
     return FileResponse("hero-video.mp4", media_type="video/mp4")
