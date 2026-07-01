@@ -1627,7 +1627,7 @@
             resultsEl.innerHTML = '';
 
             try {
-                const params = encodeURIComponent(names.join(','));
+                const params = names.map(n => encodeURIComponent(n)).join(',');
                 const res = await fetch(`/compare-funds?funds=${params}`);
                 const data = await res.json();
 
@@ -1737,7 +1737,7 @@
             resultsEl.innerHTML = '';
 
             try {
-                const fundsParam = encodeURIComponent(fundPairs.map(p => `${p.name}:${p.alloc}`).join(','));
+                const fundsParam = fundPairs.map(p => `${encodeURIComponent(p.name)}:${p.alloc}`).join(',');
                 const res = await fetch(`/sip-breakdown?funds=${fundsParam}&sip_amount=${sip}`);
                 const data = await res.json();
 
