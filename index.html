@@ -165,6 +165,7 @@
             transition: opacity 0.6s ease;
         }
         .hero-video.is-ready { opacity: 1; }
+        .hero-section.no-video { background-image: url('/hero-bg.png'); background-size: cover; background-position: center; }
         .hero-overlay {
             position: absolute; inset: 0; pointer-events: none;
             background: linear-gradient(to right,
@@ -2074,14 +2075,28 @@
                 }
             });
         }, { threshold: 0.25 });
-        document.querySelectorAll('.video-section-bg').forEach(v => sectionVideoObserver.observe(v));
+        // —— Skip heavy video downloads entirely on slow/metered connections ——
+        const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+        const isSlowConnection = !!(conn && (conn.saveData || /2g/.test(conn.effectiveType || '')));
 
-        // —— Hero video: fade in only once it actually has playable data ——
-        const heroVideo = document.getElementById('heroVideo');
-        if (heroVideo) {
-            const showVideo = () => heroVideo.classList.add('is-ready');
-            if (heroVideo.readyState >= 3) showVideo();
-            else heroVideo.addEventListener('canplay', showVideo, { once: true });
+        if (isSlowConnection) {
+            const heroSection = document.getElementById('heroSection');
+            const heroVideoEl = document.getElementById('heroVideo');
+            if (heroSection && heroVideoEl) {
+                heroSection.classList.add('no-video');
+                heroVideoEl.remove();
+            }
+            document.querySelectorAll('.video-section-bg').forEach(v => v.remove());
+        } else {
+            document.querySelectorAll('.video-section-bg').forEach(v => sectionVideoObserver.observe(v));
+
+            // —— Hero video: fade in only once it actually has playable data ——
+            const heroVideo = document.getElementById('heroVideo');
+            if (heroVideo) {
+                const showVideo = () => heroVideo.classList.add('is-ready');
+                if (heroVideo.readyState >= 3) showVideo();
+                else heroVideo.addEventListener('canplay', showVideo, { once: true });
+            }
         }
 
         // —— Scroll-reveal for sections & cards ————————————————————————
