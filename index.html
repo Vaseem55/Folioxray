@@ -154,7 +154,7 @@
             display: flex;
             align-items: center;
             padding-top: 72px;
-            background: #050508;
+            background: #050508 url('/hero-bg.png') center / cover no-repeat;
             overflow: hidden;
         }
         .hero-video {
@@ -165,7 +165,6 @@
             transition: opacity 0.6s ease;
         }
         .hero-video.is-ready { opacity: 1; }
-        .hero-section.no-video { background-image: url('/hero-bg.png'); background-size: cover; background-position: center; }
         .hero-overlay {
             position: absolute; inset: 0; pointer-events: none;
             background: linear-gradient(to right,
@@ -650,9 +649,7 @@
 
     <!-- ── HERO SECTION ──────────────────────────────── -->
     <section id="heroSection" class="hero-section">
-        <video class="hero-video" id="heroVideo" autoplay muted loop playsinline preload="metadata">
-            <source src="/hero-video.mp4" type="video/mp4">
-        </video>
+        <video class="hero-video" id="heroVideo" muted loop playsinline preload="none" data-src="/hero-video.mp4"></video>
         <div class="hero-overlay"></div>
 
         <!-- LEFT: text content -->
@@ -2075,29 +2072,33 @@
                 }
             });
         }, { threshold: 0.25 });
-        // —— Skip heavy video downloads entirely on slow/metered connections ——
-        const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-        const isSlowConnection = !!(conn && (conn.saveData || /2g/.test(conn.effectiveType || '')));
+        // —— Load background videos only after the page is fully loaded & idle,
+        //     so they never compete for bandwidth/CPU with page interaction ——
+        function startBackgroundVideos() {
+            const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            const isSlowConnection = !!(conn && (conn.saveData || /2g/.test(conn.effectiveType || '')));
+            if (isSlowConnection) return;
 
-        if (isSlowConnection) {
-            const heroSection = document.getElementById('heroSection');
-            const heroVideoEl = document.getElementById('heroVideo');
-            if (heroSection && heroVideoEl) {
-                heroSection.classList.add('no-video');
-                heroVideoEl.remove();
-            }
-            document.querySelectorAll('.video-section-bg').forEach(v => v.remove());
-        } else {
-            document.querySelectorAll('.video-section-bg').forEach(v => sectionVideoObserver.observe(v));
-
-            // —— Hero video: fade in only once it actually has playable data ——
             const heroVideo = document.getElementById('heroVideo');
-            if (heroVideo) {
+            if (heroVideo && heroVideo.dataset.src) {
+                heroVideo.src = heroVideo.dataset.src;
+                heroVideo.autoplay = true;
                 const showVideo = () => heroVideo.classList.add('is-ready');
                 if (heroVideo.readyState >= 3) showVideo();
                 else heroVideo.addEventListener('canplay', showVideo, { once: true });
+                heroVideo.load();
+                heroVideo.play().catch(() => {});
             }
+
+            document.querySelectorAll('.video-section-bg').forEach(v => sectionVideoObserver.observe(v));
         }
+
+        function scheduleBackgroundVideos() {
+            if (window.requestIdleCallback) requestIdleCallback(startBackgroundVideos, { timeout: 2000 });
+            else setTimeout(startBackgroundVideos, 300);
+        }
+        if (document.readyState === 'complete') scheduleBackgroundVideos();
+        else window.addEventListener('load', scheduleBackgroundVideos);
 
         // —— Scroll-reveal for sections & cards ————————————————————————
         const revealObserver = new IntersectionObserver((entries) => {
