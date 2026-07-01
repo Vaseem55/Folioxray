@@ -19,7 +19,6 @@
     <meta name="twitter:image" content="https://folioxray.up.railway.app/hero-bg.png">
 
     <link rel="stylesheet" href="/tailwind.css">
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -1316,6 +1315,23 @@
 
     <script>
         const SPINNER = `<svg class="animate-spin h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
+
+        // —— Load Razorpay's checkout SDK only when the user actually opens
+        //     the payment flow — its script eagerly loads dozens of payment-
+        //     method integrations and shouldn't run on every page load ——
+        let _razorpayLoadPromise = null;
+        function loadRazorpayScript() {
+            if (window.Razorpay) return Promise.resolve();
+            if (_razorpayLoadPromise) return _razorpayLoadPromise;
+            _razorpayLoadPromise = new Promise((resolve, reject) => {
+                const s = document.createElement('script');
+                s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+                s.onload = resolve;
+                s.onerror = reject;
+                document.head.appendChild(s);
+            });
+            return _razorpayLoadPromise;
+        }
         const defaultBtnHtml = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg> Run Overlap Analysis`;
 
         let currentSessionId = null;
@@ -1496,6 +1512,7 @@
                 if (order.status === 'error') { alert('Order error: ' + order.message); return; }
 
                 // —— STEP 3: Open Razorpay checkout ———————————————————
+                await loadRazorpayScript();
                 const rzp = new Razorpay({
                     key: order.key_id,
                     amount: order.amount,
