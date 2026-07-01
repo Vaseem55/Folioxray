@@ -592,57 +592,26 @@
         #bgCanvas {
             position: fixed; inset: 0; z-index: -1;
             pointer-events: none; width: 100%; height: 100%;
+            background-image:
+                radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,0.5), transparent),
+                radial-gradient(1px 1px at 25% 60%, rgba(255,255,255,0.4), transparent),
+                radial-gradient(1.5px 1.5px at 40% 30%, rgba(255,255,255,0.5), transparent),
+                radial-gradient(1px 1px at 55% 80%, rgba(255,255,255,0.35), transparent),
+                radial-gradient(1px 1px at 70% 20%, rgba(255,255,255,0.45), transparent),
+                radial-gradient(1.5px 1.5px at 85% 55%, rgba(255,255,255,0.4), transparent),
+                radial-gradient(1px 1px at 95% 75%, rgba(255,255,255,0.3), transparent),
+                radial-gradient(1px 1px at 15% 90%, rgba(255,255,255,0.35), transparent),
+                radial-gradient(1px 1px at 33% 8%, rgba(255,255,255,0.4), transparent),
+                radial-gradient(1.5px 1.5px at 65% 45%, rgba(255,255,255,0.45), transparent);
+            background-repeat: repeat;
+            background-size: 380px 380px;
         }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
 
-    <!-- 3D INTERACTIVE BACKGROUND -->
+    <!-- STATIC STAR-FIELD BACKGROUND (CSS only, no JS render loop) -->
     <canvas id="bgCanvas"></canvas>
-
-    <script>
-    (function () {
-        const canvas = document.getElementById('bgCanvas');
-        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-        renderer.setSize(window.innerWidth, window.innerHeight);
-
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 200);
-        camera.position.set(0, 0, 14);
-        camera.lookAt(0, 0, 0);
-
-        const ADD = THREE.AdditiveBlending;
-
-        /* ── STAR FIELD ONLY ────────────────────────────── */
-        const STARS = 400;
-        const sg = new THREE.BufferGeometry();
-        const sp2 = new Float32Array(STARS * 3);
-        for (let i = 0; i < STARS; i++) {
-            sp2[i*3]   = (Math.random() - 0.5) * 100;
-            sp2[i*3+1] = (Math.random() - 0.5) * 70;
-            sp2[i*3+2] = (Math.random() - 0.5) * 40 - 15;
-        }
-        sg.setAttribute('position', new THREE.BufferAttribute(sp2, 3));
-        scene.add(new THREE.Points(sg, new THREE.PointsMaterial({
-            color: 0xffffff, size: 0.07, transparent: true, opacity: 0.45,
-            blending: ADD, depthWrite: false,
-        })));
-
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-
-        (function animate() {
-            requestAnimationFrame(animate);
-            renderer.render(scene, camera);
-        })();
-
-    })();
-    </script>
 
     <!-- ── NAV ──────────────────────────────────────── -->
     <nav class="editorial-nav">
