@@ -873,7 +873,7 @@ async def serve_terms():
 
 @app.get("/mobile-bg.png")
 async def serve_mobile_bg():
-    return FileResponse("mobile.png", media_type="image/png")
+    return FileResponse("mobile.png", media_type="image/png", headers={"Cache-Control": "public, max-age=31536000, immutable"})
 
 
 @app.get("/hero-bg.png")
@@ -882,28 +882,31 @@ async def serve_hero_bg():
     for name in os.listdir("."):
         if name.lower().endswith((".png", ".jpg", ".webp")) and ("gemini" in name.lower() or "hero" in name.lower()):
             mt = "image/png" if name.endswith(".png") else "image/jpeg"
-            return FileResponse(name, media_type=mt)
-    return FileResponse("Gemini_Generated_Image_ir0woiir0woiir0w.png", media_type="image/png")
+            return FileResponse(name, media_type=mt, headers={"Cache-Control": "public, max-age=31536000, immutable"})
+    return FileResponse("Gemini_Generated_Image_ir0woiir0woiir0w.png", media_type="image/png", headers={"Cache-Control": "public, max-age=31536000, immutable"})
+
+
+STATIC_ASSET_HEADERS = {"Cache-Control": "public, max-age=31536000, immutable"}
 
 
 @app.get("/tailwind.css")
 async def serve_tailwind_css():
-    return FileResponse("tailwind.css", media_type="text/css")
+    return FileResponse("tailwind.css", media_type="text/css", headers=STATIC_ASSET_HEADERS)
 
 
 @app.get("/hero-video.mp4")
 async def serve_hero_video():
-    return FileResponse("hero-video.mp4", media_type="video/mp4")
+    return FileResponse("hero-video.mp4", media_type="video/mp4", headers=STATIC_ASSET_HEADERS)
 
 
 @app.get("/howitworks-video.mp4")
 async def serve_howitworks_video():
-    return FileResponse("howitworks-video.mp4", media_type="video/mp4")
+    return FileResponse("howitworks-video.mp4", media_type="video/mp4", headers=STATIC_ASSET_HEADERS)
 
 
 @app.get("/sector-video.mp4")
 async def serve_sector_video():
-    return FileResponse("sector-video.mp4", media_type="video/mp4")
+    return FileResponse("sector-video.mp4", media_type="video/mp4", headers=STATIC_ASSET_HEADERS)
 
 
 @app.post("/audit-cas")
