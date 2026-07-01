@@ -1618,6 +1618,7 @@
                 if (data.error) {
                     resultsEl.innerHTML = `<div style="background:rgba(244,63,94,0.06);border:1px solid rgba(244,63,94,0.2);border-radius:14px;padding:1.25rem;font-size:0.875rem;color:#fda4af;">${data.error}${data.tip ? '<br><span style="color:#64748b;font-size:0.78rem;">'+data.tip+'</span>' : ''}</div>`;
                     resultsEl.classList.remove('hidden');
+                resultsEl.classList.add('reveal', 'in-view');
                     return;
                 }
 
@@ -1669,11 +1670,13 @@
 
                 resultsEl.innerHTML = html;
                 resultsEl.classList.remove('hidden');
+                resultsEl.classList.add('reveal', 'in-view');
                 resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
             } catch(err) {
                 resultsEl.innerHTML = `<div style="background:rgba(244,63,94,0.06);border:1px solid rgba(244,63,94,0.2);border-radius:14px;padding:1.25rem;font-size:0.875rem;color:#fda4af;">Connection error — make sure the server is running.</div>`;
                 resultsEl.classList.remove('hidden');
+                resultsEl.classList.add('reveal', 'in-view');
             } finally {
                 btn.innerHTML = `<svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg> Compare`;
                 btn.disabled = false;
@@ -1728,6 +1731,7 @@
                 if (data.error) {
                     resultsEl.innerHTML = `<div style="background:rgba(244,63,94,0.06);border:1px solid rgba(244,63,94,0.2);border-radius:14px;padding:1.25rem;font-size:0.875rem;color:#fda4af;">${data.error}</div>`;
                     resultsEl.classList.remove('hidden');
+                resultsEl.classList.add('reveal', 'in-view');
                     return;
                 }
 
@@ -1812,11 +1816,13 @@
 
                 resultsEl.innerHTML = html;
                 resultsEl.classList.remove('hidden');
+                resultsEl.classList.add('reveal', 'in-view');
                 resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
             } catch(err) {
                 resultsEl.innerHTML = `<div style="background:rgba(244,63,94,0.06);border:1px solid rgba(244,63,94,0.2);border-radius:14px;padding:1.25rem;font-size:0.875rem;color:#fda4af;">Connection error — make sure the server is running.</div>`;
                 resultsEl.classList.remove('hidden');
+                resultsEl.classList.add('reveal', 'in-view');
             } finally {
                 btn.innerHTML = `<svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg> Calculate`;
                 btn.disabled = false;
@@ -1849,6 +1855,7 @@
                 if (!data.results) {
                     resultsEl.innerHTML = `<div style="background:rgba(244,63,94,0.06);border:1px solid rgba(244,63,94,0.2);border-radius:14px;padding:1.25rem;font-size:0.875rem;color:#fda4af;">${data.error || 'Unknown error'}</div>`;
                     resultsEl.classList.remove('hidden');
+                resultsEl.classList.add('reveal', 'in-view');
                     return;
                 }
 
@@ -1905,11 +1912,13 @@
 
                 resultsEl.innerHTML = html;
                 resultsEl.classList.remove('hidden');
+                resultsEl.classList.add('reveal', 'in-view');
                 resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
             } catch(err) {
                 resultsEl.innerHTML = `<div style="background:rgba(244,63,94,0.06);border:1px solid rgba(244,63,94,0.2);border-radius:14px;padding:1.25rem;font-size:0.875rem;color:#fda4af;">Connection error.</div>`;
                 resultsEl.classList.remove('hidden');
+                resultsEl.classList.add('reveal', 'in-view');
             } finally {
                 btn.innerHTML = `<svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg> Find Funds`;
                 btn.disabled = false;
@@ -1971,6 +1980,7 @@
                 if (data.error) {
                     resultsEl.innerHTML = `<div style="background:rgba(244,63,94,0.06);border:1px solid rgba(244,63,94,0.2);border-radius:14px;padding:1.25rem;font-size:0.875rem;color:#fda4af;">${data.error}${data.tip ? '<br><span style="color:#64748b;font-size:0.78rem;">'+data.tip+'</span>' : ''}</div>`;
                     resultsEl.classList.remove('hidden');
+                resultsEl.classList.add('reveal', 'in-view');
                     return;
                 }
 
@@ -2044,11 +2054,13 @@
 
                 resultsEl.innerHTML = html;
                 resultsEl.classList.remove('hidden');
+                resultsEl.classList.add('reveal', 'in-view');
                 resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
             } catch(err) {
                 resultsEl.innerHTML = `<div style="background:rgba(244,63,94,0.06);border:1px solid rgba(244,63,94,0.2);border-radius:14px;padding:1.25rem;font-size:0.875rem;color:#fda4af;">Connection error.</div>`;
                 resultsEl.classList.remove('hidden');
+                resultsEl.classList.add('reveal', 'in-view');
             } finally {
                 btn.innerHTML = `<svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/></svg> Analyse`;
                 btn.disabled = false;
@@ -2133,15 +2145,6 @@
         }, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
         document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
 
-        // —— Result panels: reveal on render ————————————————————————————
-        ['compareResults', 'sipResults', 'screenerResults', 'sectorResults', 'resultsCard'].forEach(id => {
-            const el = document.getElementById(id);
-            if (!el) return;
-            const mo = new MutationObserver(() => {
-                if (!el.classList.contains('hidden')) el.classList.add('reveal', 'in-view');
-            });
-            mo.observe(el, { attributes: true, attributeFilter: ['class'] });
-        });
     </script>
 </body>
 </html>
